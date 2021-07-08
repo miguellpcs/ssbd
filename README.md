@@ -1,5 +1,5 @@
 # Small Summaries for Big Data Algorithms
- Python, Rust and C implementation
+ Python, Rust and C implementation by
  Miguel Cruz, Francisco Soares
   ## Project:
    ### Algorithms: 
