@@ -1,8 +1,13 @@
 # Small Summaries for Big Data Algorithms
- Python and Rust implementation
+ Python, Rust and C implementation by
+ Miguel Cruz, Francisco Soares
   ## Project:
    ### Algorithms: 
-
+   * Weighted Sampling
+   * K Minimum Values (KMV)
+   * HyperLogLog
+   * CountMin
+   and more...
 
    ### Analysis:
    
@@ -13,5 +18,6 @@
    Small Summaries for Big Data - by Graham Cormode and Ke Yi
    ...
   
-
+  ## More:
+   
   
