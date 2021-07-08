@@ -1,5 +1,6 @@
 # Small Summaries for Big Data Algorithms
  Python, Rust and C implementation
+ Miguel Cruz, Francisco Soares
   ## Project:
    ### Algorithms: 
    * Weighted Sampling
@@ -17,5 +18,6 @@
    Small Summaries for Big Data - by Graham Cormode and Ke Yi
    ...
   
-
+  ## More:
+   
   
