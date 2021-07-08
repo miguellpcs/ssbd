@@ -2,7 +2,11 @@
  Python and Rust implementation
   ## Project:
    ### Algorithms: 
-
+   * Weighted Sampling
+   * K Minimum Values (KMV)
+   * HyperLogLog
+   * CountMin
+   and more...
 
    ### Analysis:
    
