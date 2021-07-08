@@ -1,5 +1,5 @@
 # Small Summaries for Big Data Algorithms
- Python and Rust implementation
+ Python, Rust and C implementation
   ## Project:
    ### Algorithms: 
    * Weighted Sampling
