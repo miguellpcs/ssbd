@@ -1,7 +1,7 @@
 import random
 
 
-class weighted_sampling:
+class random_sampling:
     import random
     def __init__(self,s) -> None:
         self.count = 0
@@ -18,10 +18,29 @@ class weighted_sampling:
 
     def query(self):
         print(self.data)
+        
+
+class weighted_sampling:
+    import random
+    def __init__(self,s) -> None:
+        self.C = []
+        self.H = []
+        self.tal = 0
+        self.limit = s
+
+    def update(self,x):
+        if len(self.H) < self.limit:
+            self.H.append(x)
+            self.H = sorted(self.H, key=lambda tup: tup[1])
+        else:
+            pass
+
+    def query(self):
+        print(self.data)
         #return self.data
 
 
-array = [i for i in range(10)]
+array = [(i,i) for i in range(10)]
 s = 5
 sketch = weighted_sampling(s)
 for x in array:
