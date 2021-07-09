@@ -26,11 +26,13 @@ typedef struct ws
     int len;
 }WS;
 
-void insert_min_heap(Instance *instance){
+void insert_min_heap(Heap heap,Instance *instance){
 
 
     return;
 }
+
+
 WS *init(int size){
     WS *sketch = malloc(sizeof(WS));
     sketch->count = 0;
@@ -49,10 +51,10 @@ WS *init(int size){
     return sketch;
 }
 
-WS *update(WS *sketch, int x){
+WS *update(WS *sketch, Instance x){
     if( sketch->len < sketch->limit){
         // sketch->data[sketch->count] = x;
-        insert_min_heap(sketch->high,x);
+        insert_min_heap(sketch->high,X);
         sketch->count += 1;
         sketch->len   += 1;
     }
