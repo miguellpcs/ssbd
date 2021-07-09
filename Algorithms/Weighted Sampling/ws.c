@@ -1,32 +1,65 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+
+typedef struct instance
+{
+    int val;
+    int weight;
+}Instance;
+
+typedef struct heap
+{
+    Instance *instances;
+    int count;
+
+}Heap;
 
 typedef struct ws
 {
-    int *data;
+    int *data; // Usar HEAP para inserir em tempo logaritmico
+    Heap  *high;
+    Heap  *low;
     int count;
     int limit;
+    int len;
 }WS;
 
+void insert_min_heap(Instance *instance){
+
+
+    return;
+}
 WS *init(int size){
     WS *sketch = malloc(sizeof(WS));
     sketch->count = 0;
+    sketch->len = 0;
     sketch->limit = size;
-    sketch->data = malloc(size*sizeof(int));
+    //sketch->data = malloc(size*sizeof(int));
+    
+    sketch->high = malloc(sizeof(Heap));
+    sketch->high->instances = malloc(size*sizeof(Instance));
+    sketch->high->count = 0;
+
+    sketch->low = malloc(sizeof(Heap));
+    sketch->low->instances =NULL;
+    sketch->low->count = 0;
+   
     return sketch;
 }
 
 WS *update(WS *sketch, int x){
-    
-    if(sizeof(sketch->data)/sizeof(int) < sketch->limit){
-        printf("x = %d\n", x);
-        sketch->data[sketch->count] = x;
+    if( sketch->len < sketch->limit){
+        // sketch->data[sketch->count] = x;
+        insert_min_heap(sketch->high,x);
         sketch->count += 1;
+        sketch->len   += 1;
     }
     
     else{
         sketch->count += 1;
-        int i = uniform_distribution(1,sketch->count);
+        int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
             sketch->data[i] = x;
         }
@@ -35,7 +68,7 @@ WS *update(WS *sketch, int x){
     return sketch;
 }
 void query(WS *sketch){
-    for(int i  = 0 ; i < (sizeof(sketch->data)/sizeof(int));i++){
+    for(int i  = 0 ; i < sketch->len ;i++){
         printf("%d ", sketch->data[i]);
     }
     printf("\n");
@@ -48,7 +81,7 @@ typedef struct
 }Array;
 
 int uniform_distribution(int rangeLow, int rangeHigh) {
-    //srand(time(0));
+    srand(time(0));
     double myRand = rand()/(1.0 + RAND_MAX); 
     int range = rangeHigh - rangeLow + 1;
     int myRand_scaled = (myRand * range) + rangeLow;
@@ -58,7 +91,7 @@ int uniform_distribution(int rangeLow, int rangeHigh) {
 Array *create_sample(int size){
     int *data = malloc(size*sizeof(int));
     for(int i = 0; i < size; i++){
-        data[i] = uniform_distribution(0,100);
+        data[i] = i;
     }
     Array *array = malloc(1*sizeof(Array));
     array->data = data;
@@ -80,15 +113,20 @@ void print_sample(Array *array){
 
 int main(){
     int tst_size = 10;
-    Array *tst = create_sample(tst_size);
-    print_sample(tst);
+    int random_sample_size=5;
 
-    WS *sketch = init(3);
+    Array *tst = create_sample(tst_size);
+
+    printf("Stream:\n");
+    print_sample(tst);
+    printf("Random Sample size: %d \n", random_sample_size);
+
+    WS *sketch = init(random_sample_size);
     
     for(int i = 0; i <  tst_size; i++){
         sketch = update(sketch, tst->data[i]);
     }
-        
+    printf("Random Sample:\n"); 
     query(sketch);
 
     return 0;   
