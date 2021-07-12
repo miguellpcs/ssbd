@@ -115,19 +115,17 @@ WS *init(int size){
 
 WS *update(WS *sketch, Instance x){   // Update fors simple RS. TODO: add tal update
     if( sketch->len < sketch->limit){
-        // sketch->data[sketch->count] = x;
         insert_min_heap(sketch->high,&x);
         sketch->count += 1;
         sketch->len   += 1;
-        printf("Oi\n");
     }
     
     else{
-        printf("aqui\n");
+        return sketch;
         sketch->count += 1;
         int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
-            sketch->high->instances[i] = x;
+            insert_min_heap(sketch->high,&x);
         }
     }
 
@@ -170,7 +168,6 @@ Array *create_sample(int size){
 }
 
 void print_sample(Array *array){
-    printf("hello\n");
     Instance *data = array->data;
     for(int i = 0; i < array->size; i++){
         printf("val = %d, weight = %d\n", data[i].val, data[i].weight);
