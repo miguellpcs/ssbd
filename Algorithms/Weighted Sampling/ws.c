@@ -57,7 +57,7 @@ WS *init(int size){
     return sketch;
 }
 
-WS *update(WS *sketch, Instance *x){
+WS *update(WS *sketch, Instance *x){   // Update fors simple RS. TODO: add tal update
     if( sketch->len < sketch->limit){
         // sketch->data[sketch->count] = x;
         insert_min_heap(sketch->high,x);
@@ -75,6 +75,7 @@ WS *update(WS *sketch, Instance *x){
 
     return sketch;
 }
+
 void query(WS *sketch){
     for(int i  = 0 ; i < sketch->len ;i++){
         printf("%d ", sketch->data[i]);
