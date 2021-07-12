@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-
 typedef struct instance
 {
     int val;
@@ -28,15 +27,28 @@ typedef struct ws
 
 void insert_min_heap(Heap *heap, Instance *instance){
     heap->instances[heap->count] = *instance;
-    heapify_bottom_top(heap);
+    heapify_bottom_top(heap,heap->count );
     heap->count++;
     
     return;
 }
 
-void heapify_bottom_top(Heap *heap){
+void heapify_bottom_top(Heap *heap,int index){
+    Instance temp;
+    int parent_node = (index-1)/2;
+
+    int new_val= heap->instances[index].weight;
+    int parent_val = heap->instances[parent_node].weight;
+
+    if(parent_val > new_val){
+
+        temp = heap->instances[parent_node];
+        heap->instances[parent_node] = heap->instances[index];
+        heap->instances[index] = temp;
+        heapify_bottom_top(heap,parent_node);
 
     return;
+    }
 }
 
 WS *init(int size){
