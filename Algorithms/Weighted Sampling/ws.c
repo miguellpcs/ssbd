@@ -20,6 +20,7 @@ typedef struct ws
     int   *data; // Usar HEAP para inserir em tempo logaritmico
     Heap  *high;
     Heap  *low;
+    float tal;
     int   count;
     int   limit;
     int   len;
@@ -97,6 +98,7 @@ WS *init(int size){
     WS *sketch = malloc(sizeof(WS));
     sketch->count = 0;
     sketch->len = 0;
+    sketch->tal = 0;
     sketch->limit = size;
     //sketch->data = malloc(size*sizeof(int));
     
@@ -117,9 +119,11 @@ WS *update(WS *sketch, Instance *x){   // Update fors simple RS. TODO: add tal u
         insert_min_heap(sketch->high,x);
         sketch->count += 1;
         sketch->len   += 1;
+        printf("Oi\n");
     }
     
     else{
+        return sketch;
         sketch->count += 1;
         int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
@@ -132,14 +136,14 @@ WS *update(WS *sketch, Instance *x){   // Update fors simple RS. TODO: add tal u
 
 void query(WS *sketch){
     for(int i  = 0 ; i < sketch->len ;i++){
-        printf("%d ", sketch->data[i]);
+        printf("%d ", sketch->high->instances[i].val);
     }
     printf("\n");
 }
 
 typedef struct
 {
-    int *data;
+    Instance *data;
     int size;
 }Array;
 
@@ -152,9 +156,10 @@ int uniform_distribution(int rangeLow, int rangeHigh) {
 }
 
 Array *create_sample(int size){
-    int *data = malloc(size*sizeof(int));
+    Instance *data = malloc(size*sizeof(Instance));
     for(int i = 0; i < size; i++){
-        data[i] = i;
+        data[i].val = i;
+        data[i].weight = i;
     }
     Array *array = malloc(1*sizeof(Array));
     array->data = data;
@@ -165,9 +170,10 @@ Array *create_sample(int size){
 }
 
 void print_sample(Array *array){
-    int *data = array->data;
+    printf("hello\n");
+    Instance *data = array->data;
     for(int i = 0; i < array->size; i++){
-        printf("%d ", data[i]);
+        printf("val = %d, weight = %d\n", data[i].val, data[i].weight);
     }
     printf("\n");
     
@@ -186,8 +192,8 @@ int main(){
 
     WS *sketch = init(random_sample_size);
     
-    for(int i = 0; i <  tst_size; i++){
-        sketch = update(sketch, tst->data[i]);
+    for(int i = 0; i < tst_size; i++){
+        sketch = update(sketch, &tst->data[i]);
     }
     printf("Random Sample:\n"); 
     query(sketch);
