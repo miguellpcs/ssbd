@@ -12,26 +12,32 @@ typedef struct instance
 typedef struct heap
 {
     Instance *instances;
-    int count;
+    int       count;
 
 }Heap;
 
 typedef struct ws
 {
-    int *data; // Usar HEAP para inserir em tempo logaritmico
+    int   *data; // Usar HEAP para inserir em tempo logaritmico
     Heap  *high;
     Heap  *low;
-    int count;
-    int limit;
-    int len;
+    int   count;
+    int   limit;
+    int   len;
 }WS;
 
-void insert_min_heap(Heap heap,Instance *instance){
-
-
+void insert_min_heap(Heap *heap, Instance *instance){
+    heap->instances[heap->count] = *instance;
+    heapify_bottom_top(heap);
+    heap->count++;
+    
     return;
 }
 
+void heapify_bottom_top(Heap *heap){
+
+    return;
+}
 
 WS *init(int size){
     WS *sketch = malloc(sizeof(WS));
@@ -45,16 +51,16 @@ WS *init(int size){
     sketch->high->count = 0;
 
     sketch->low = malloc(sizeof(Heap));
-    sketch->low->instances =NULL;
+    sketch->low->instances = NULL;
     sketch->low->count = 0;
    
     return sketch;
 }
 
-WS *update(WS *sketch, Instance x){
+WS *update(WS *sketch, Instance *x){
     if( sketch->len < sketch->limit){
         // sketch->data[sketch->count] = x;
-        insert_min_heap(sketch->high,X);
+        insert_min_heap(sketch->high,x);
         sketch->count += 1;
         sketch->len   += 1;
     }
@@ -63,7 +69,7 @@ WS *update(WS *sketch, Instance x){
         sketch->count += 1;
         int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
-            sketch->data[i] = x;
+            sketch->high->instances = x;
         }
     }
 
