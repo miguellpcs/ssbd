@@ -79,6 +79,20 @@ void heapify_top_bottom(Heap *heap, int parent_node){
     }
 }
 
+void PopMin(Heap *heap){
+    Instance pop;
+    if(heap->count==0){
+        printf("\n__Heap is Empty__\n");
+        return -1;
+    }
+    pop = heap->instances[0];
+    heap->instances[0] = heap->instances[heap->count-1];
+    heap->count--;
+    heapify_top_bottom(heap, 0);
+    return;
+}
+
+
 WS *init(int size){
     WS *sketch = malloc(sizeof(WS));
     sketch->count = 0;
