@@ -17,7 +17,6 @@ typedef struct heap
 
 typedef struct ws
 {
-    int   *data; // Usar HEAP para inserir em tempo logaritmico
     Heap  *high;
     Heap  *low;
     float tal;
@@ -121,11 +120,12 @@ WS *update(WS *sketch, Instance x){   // Update fors simple RS. TODO: add tal up
     }
     
     else{
-        return sketch;
         sketch->count += 1;
         int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
+            PopMin(sketch->high);
             insert_min_heap(sketch->high,&x);
+            
         }
     }
 
@@ -134,7 +134,7 @@ WS *update(WS *sketch, Instance x){   // Update fors simple RS. TODO: add tal up
 
 void query(WS *sketch){
     for(int i  = 0 ; i < sketch->len ;i++){
-        printf("%d ", sketch->high->instances[i].val);
+        printf("val = %d, weight = %d \n ", sketch->high->instances[i].val, sketch->high->instances[i].weight);
     }
     printf("\n");
 }
@@ -157,7 +157,7 @@ Array *create_sample(int size){
     Instance *data = malloc(size*sizeof(Instance));
     for(int i = 0; i < size; i++){
         data[i].val = i;
-        data[i].weight = i;
+        data[i].weight = 10 - i;
     }
     Array *array = malloc(1*sizeof(Array));
     array->data = data;
