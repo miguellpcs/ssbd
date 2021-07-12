@@ -27,7 +27,7 @@ typedef struct ws
 
 void insert_min_heap(Heap *heap, Instance *instance){
     heap->instances[heap->count] = *instance;
-    heapify_bottom_top(heap,heap->count );
+    heapify_bottom_top(heap,heap->count);
     heap->count++;
     
     return;
@@ -48,6 +48,34 @@ void heapify_bottom_top(Heap *heap,int index){
         heapify_bottom_top(heap,parent_node);
 
     return;
+    }
+}
+
+
+void heapify_top_bottom(Heap *heap, int parent_node){
+    int left = parent_node*2+1;
+    int right = parent_node*2+2;
+    int min;
+    Instance temp;
+
+    if(left >= heap->count || left <0)
+        left = -1;
+    if(right >= heap->count || right <0)
+        right = -1;
+
+    if(left != -1 && heap->instances[left].weight < heap->instances[parent_node].weight)
+        min=left;
+    else
+        min =parent_node;
+    if(right != -1 && heap->instances[right].weight < heap->instances[min].weight)
+        min = right;
+
+    if(min != parent_node){
+        temp = heap->instances[min];
+        heap->instances[min] = heap->instances[parent_node];
+        heap->instances[parent_node] = temp;
+
+        heapify_top_bottom(heap, min);
     }
 }
 
