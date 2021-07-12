@@ -113,21 +113,21 @@ WS *init(int size){
     return sketch;
 }
 
-WS *update(WS *sketch, Instance *x){   // Update fors simple RS. TODO: add tal update
+WS *update(WS *sketch, Instance x){   // Update fors simple RS. TODO: add tal update
     if( sketch->len < sketch->limit){
         // sketch->data[sketch->count] = x;
-        insert_min_heap(sketch->high,x);
+        insert_min_heap(sketch->high,&x);
         sketch->count += 1;
         sketch->len   += 1;
         printf("Oi\n");
     }
     
     else{
-        return sketch;
+        printf("aqui\n");
         sketch->count += 1;
         int i = uniform_distribution(0,sketch->count);
         if(i < sketch->limit){
-            sketch->high->instances = x;
+            sketch->high->instances[i] = x;
         }
     }
 
@@ -193,7 +193,7 @@ int main(){
     WS *sketch = init(random_sample_size);
     
     for(int i = 0; i < tst_size; i++){
-        sketch = update(sketch, &tst->data[i]);
+        sketch = update(sketch, tst->data[i]);
     }
     printf("Random Sample:\n"); 
     query(sketch);
