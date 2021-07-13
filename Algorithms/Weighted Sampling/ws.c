@@ -25,6 +25,45 @@ typedef struct ws
     int   len;
 }WS;
 
+typedef struct
+{
+    Instance *data;
+    int size;
+}Array;
+
+int uniform_distribution(int rangeLow, int rangeHigh) {
+    srand(time(0));
+    double myRand = rand()/(1.0 + RAND_MAX); 
+    int range = rangeHigh - rangeLow + 1;
+    int myRand_scaled = (myRand * range) + rangeLow;
+    return myRand_scaled;
+}
+
+Array *create_sample(int size){
+    Instance *data = malloc(size*sizeof(Instance));
+    for(int i = 0; i < size; i++){
+        data[i].val = i;
+        data[i].weight = size - i + (uniform_distribution(0,100));
+    }
+    Array *array = malloc(1*sizeof(Array));
+    array->data = data;
+    array->size = size;
+
+    return array;
+
+}
+
+void print_sample(Array *array){
+    Instance *data = array->data;
+    for(int i = 0; i < array->size; i++){
+        printf("val = %d, weight = %d\n", data[i].val, data[i].weight);
+    }
+    printf("\n");
+    
+
+}
+
+
 void insert_min_heap(Heap *heap, Instance *instance){
     heap->instances[heap->count] = *instance;
     heapify_bottom_top(heap,heap->count);
@@ -139,47 +178,10 @@ void query(WS *sketch){
     printf("\n");
 }
 
-typedef struct
-{
-    Instance *data;
-    int size;
-}Array;
-
-int uniform_distribution(int rangeLow, int rangeHigh) {
-    srand(time(0));
-    double myRand = rand()/(1.0 + RAND_MAX); 
-    int range = rangeHigh - rangeLow + 1;
-    int myRand_scaled = (myRand * range) + rangeLow;
-    return myRand_scaled;
-}
-
-Array *create_sample(int size){
-    Instance *data = malloc(size*sizeof(Instance));
-    for(int i = 0; i < size; i++){
-        data[i].val = i;
-        data[i].weight = 10 - i;
-    }
-    Array *array = malloc(1*sizeof(Array));
-    array->data = data;
-    array->size = size;
-
-    return array;
-
-}
-
-void print_sample(Array *array){
-    Instance *data = array->data;
-    for(int i = 0; i < array->size; i++){
-        printf("val = %d, weight = %d\n", data[i].val, data[i].weight);
-    }
-    printf("\n");
-    
-
-}
 
 int main(){
-    int tst_size = 10;
-    int random_sample_size=5;
+    int tst_size = 100;
+    int random_sample_size=10;
 
     Array *tst = create_sample(tst_size);
 
