@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "../lib/array.h"
+#include "../lib/csv_parser.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
 #include "../lib/opt.h"
@@ -59,6 +60,18 @@ int main(int argc, const char *argv[])
     }
 
     const char *filename = strdup(argv[argc - 1]);
+    FILE *file = fopen(filename, "r");
+
+    csv_parser_t *parser = NULL;
+    csv_parser_init(&parser);
+
+    char *buffer;
+    size_t buffer_size = 2048;
+
+    buffer = (char *)malloc(buffer_size * sizeof(char));
+    getline(&buffer, &buffer_size, file);
+
+    read_from_line(parser, buffer);
 
     int random_sample_size = 10;
 
@@ -73,6 +86,8 @@ int main(int argc, const char *argv[])
     for (int i = 0; i < size; i++)
     {
         sketch = update(sketch, tst->data[i]);
+        getline(&buffer, &buffer_size, file);
+        read_from_line(parser, buffer);
     }
     printf("Random Sample:\n");
     query(sketch);

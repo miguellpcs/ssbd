@@ -19,7 +19,7 @@
                 "GOOGLE",
                 "--size",
                 "1024",
-                "network_flows_unique.csv"
+                "../network_flows_unique.csv"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
