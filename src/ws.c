@@ -24,8 +24,8 @@ void query(WS *);
 int main(int argc, const char *argv[])
 {
     opt_t *opt;
-    const char *opt_key;
-    const char **opt_args = NULL;
+    const char *opt_key = 0xdeadbeef;
+    const char **opt_args = 0xdeadbeef;
 
     int status = opt_init(&opt, "id:weight:size:filter:", argc, argv);
     if (status != OPT_SUCCESS)
