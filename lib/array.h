@@ -1,0 +1,50 @@
+#ifndef array_h
+#define array_h
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#include "instance.h"
+
+int uniform_distribution(int rangeLow, int rangeHigh)
+{
+    srand(time(0));
+    double myRand = rand() / (1.0 + RAND_MAX);
+    int range = rangeHigh - rangeLow + 1;
+    int myRand_scaled = (myRand * range) + rangeLow;
+    return myRand_scaled;
+}
+
+typedef struct
+{
+    Instance *data;
+    int size;
+} Array;
+
+Array *create_sample(int size)
+{
+    Instance *data = (Instance *)malloc(size * sizeof(Instance));
+    for (int i = 0; i < size; i++)
+    {
+        data[i].val = i;
+        data[i].weight = size - i + (uniform_distribution(0, 100));
+    }
+    Array *array = (Array *)malloc(1 * sizeof(Array));
+    array->data = data;
+    array->size = size;
+
+    return array;
+}
+
+void print_sample(Array *array)
+{
+    Instance *data = array->data;
+    for (int i = 0; i < array->size; i++)
+    {
+        printf("val = %d, weight = %d\n", data[i].val, data[i].weight);
+    }
+    printf("\n");
+}
+
+#endif
