@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "../lib/array.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
+#include "../lib/opt.h"
 
 int uniform_distribution(int, int);
 
@@ -19,12 +21,48 @@ WS *init(int);
 WS *update(WS *, Instance);
 void query(WS *);
 
-int main()
+int main(int argc, const char *argv[])
 {
-    int tst_size = 100;
+    opt_t *opt;
+    const char *opt_key;
+    const char **opt_args = NULL;
+
+    int status = opt_init(&opt, "id:weight:size:filter:", argc, argv);
+    if (status != OPT_SUCCESS)
+    {
+    }
+
+    int id_field_no = 0;
+    int weight_field_no = 0;
+    int size = 0;
+    int field_no = 0;
+    const char *field_value = NULL;
+    while (get_opt(opt, &opt_key, &opt_args) == OPT_SUCCESS)
+    {
+        if (strcmp(opt_key, "id") == 0)
+        {
+            id_field_no = atoi(opt_args[0]);
+        }
+        else if (strcmp(opt_key, "weight") == 0)
+        {
+            weight_field_no = atoi(opt_args[0]);
+        }
+        else if (strcmp(opt_key, "size") == 0)
+        {
+            size = atoi(opt_args[0]);
+        }
+        else if (strcmp(opt_key, "filter") == 0)
+        {
+            field_no = atoi(opt_args[0]);
+            field_value = strdup(opt_args[1]);
+        }
+    }
+
+    const char *filename = strdup(argv[argc - 1]);
+
     int random_sample_size = 10;
 
-    Array *tst = create_sample(tst_size);
+    Array *tst = create_sample(size);
 
     printf("Stream:\n");
     print_sample(tst);
@@ -32,7 +70,7 @@ int main()
 
     WS *sketch = init(random_sample_size);
 
-    for (int i = 0; i < tst_size; i++)
+    for (int i = 0; i < size; i++)
     {
         sketch = update(sketch, tst->data[i]);
     }
