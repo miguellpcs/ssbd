@@ -14,6 +14,7 @@ typedef struct
 {
     int total;
     int current_arg;
+    int current_args_count;
     const char *const *arguments;
     char **patterns;
     int patterns_count;
@@ -57,6 +58,7 @@ int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const
 
 int get_opt(opt_t *opt, const char **opt_key, const char ***opt_args)
 {
+    // //TODO(fssn): Free allocated memory
     if (opt->current_arg == opt->total)
         return OPT_EOF;
 
@@ -95,6 +97,8 @@ int get_opt(opt_t *opt, const char **opt_key, const char ***opt_args)
     int number_of_args = tmp - opt->current_arg;
     if (number_of_args == 0)
         return OPT_EOF;
+
+    opt->current_args_count = number_of_args;
 
     *opt_args = (const char **)malloc(sizeof(char **) * number_of_args);
     for (int i = 0; i < number_of_args; i++)
