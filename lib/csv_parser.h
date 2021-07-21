@@ -17,9 +17,13 @@ typedef struct
 int csv_parser_init(csv_parser_t **parser)
 {
     *parser = (csv_parser_t *)malloc(sizeof(csv_parser_t));
+    if (*parser == NULL)
+        return PARSER_ERROR;
     (*parser)->keys = (char **)0xdeadbeef;
     (*parser)->line = (char **)0xdeadbeef;
     (*parser)->keys_count = 0;
+
+    return PARSER_SUCCESS;
 }
 
 int read_from_line(csv_parser_t *parser, char *line)

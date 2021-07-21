@@ -74,14 +74,14 @@ void heapify_top_bottom(Heap *heap, int parent_node)
 
 void pop_min(Heap *heap)
 {
-    Instance _pop;
+    // Instance _pop;
     if (heap->count == 0)
     {
         printf("\n__Heap is Empty__\n");
         return;
     }
 
-    _pop = heap->instances[0];
+    // _pop = heap->instances[0];
     heap->instances[0] = heap->instances[heap->count - 1];
     heap->count--;
     heapify_top_bottom(heap, 0);

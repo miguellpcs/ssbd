@@ -20,13 +20,13 @@ typedef struct ws
 } WS;
 WS *init(int);
 WS *update(WS *, Instance);
-void query(WS *);
+int query(WS *);
 
 int main(int argc, const char *argv[])
 {
     opt_t *opt;
-    const char *opt_key = 0xdeadbeef;
-    const char **opt_args = 0xdeadbeef;
+    const char *opt_key = NULL;
+    const char **opt_args = NULL;
 
     int status = opt_init(&opt, "id:weight:size:filter:", argc, argv);
     if (status != OPT_SUCCESS)
@@ -63,7 +63,10 @@ int main(int argc, const char *argv[])
     FILE *file = fopen(filename, "r");
 
     csv_parser_t *parser = NULL;
-    csv_parser_init(&parser);
+    status = csv_parser_init(&parser);
+    if (status != PARSER_SUCCESS)
+    {
+    }
 
     char *buffer;
     size_t buffer_size = 2048;
@@ -71,26 +74,33 @@ int main(int argc, const char *argv[])
     buffer = (char *)malloc(buffer_size * sizeof(char));
     getline(&buffer, &buffer_size, file);
 
+    // Read keys from csv
     read_from_line(parser, buffer);
 
-    int random_sample_size = 10;
+    WS *sketch = init(size);
 
-    Array *tst = create_sample(size);
-
-    printf("Stream:\n");
-    print_sample(tst);
-    printf("Random Sample size: %d \n", random_sample_size);
-
-    WS *sketch = init(random_sample_size);
-
-    for (int i = 0; i < size; i++)
+    ssize_t lines_read;
+    while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
     {
-        sketch = update(sketch, tst->data[i]);
+        // skip blank lines
+        if (lines_read == 1)
+            continue;
+
         getline(&buffer, &buffer_size, file);
         read_from_line(parser, buffer);
+
+        // Skip if not filtered field
+        if (strcmp(parser->line[field_no], field_value) != 0)
+        {
+            continue;
+        }
+
+        Instance instance = {.val = atoi(parser->line[id_field_no]), .weight = atoi(parser->line[weight_field_no])};
+        sketch = update(sketch, instance);
     }
-    printf("Random Sample:\n");
-    query(sketch);
+
+    int count = query(sketch);
+    printf("Element count: %d\n", count);
 
     return 0;
 }
@@ -139,11 +149,12 @@ WS *update(WS *sketch, Instance x)
     return sketch;
 }
 
-void query(WS *sketch)
+int query(WS *sketch)
 {
     for (int i = 0; i < sketch->len; i++)
     {
         printf("val = %d, weight = %d \n ", sketch->high->instances[i].val, sketch->high->instances[i].weight);
     }
     printf("\n");
+    return sketch->count;
 }
