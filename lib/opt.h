@@ -30,6 +30,7 @@ int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const
     (*opt)->total = argc;
     (*opt)->current_arg = 1;
     (*opt)->arguments = argv;
+    (*opt)->current_args_count = 0;
 
     char delim[] = ":";
     (*opt)->patterns_count = 0;
@@ -56,9 +57,8 @@ int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const
     return OPT_SUCCESS;
 }
 
-int get_opt(opt_t *opt, const char **opt_key, const char ***opt_args)
+int get_opt(opt_t *opt, const char **opt_key, char ***opt_args)
 {
-    // //TODO(fssn): Free allocated memory
     if (opt->current_arg == opt->total)
         return OPT_EOF;
 
@@ -88,7 +88,7 @@ int get_opt(opt_t *opt, const char **opt_key, const char ***opt_args)
 
     int tmp = opt->current_arg;
     // Check how many args until next key or end of args
-    // Needed because we don't know ahead of time how many more args left before --
+    // Needed because we don't know ahead of time how many more args left before the next -- or end of args
     while (tmp < opt->total && (opt->arguments[tmp][0] != '-' || opt->arguments[tmp][1] != '-'))
     {
         tmp++;
@@ -98,9 +98,17 @@ int get_opt(opt_t *opt, const char **opt_key, const char ***opt_args)
     if (number_of_args == 0)
         return OPT_EOF;
 
-    opt->current_args_count = number_of_args;
+    if (opt_args != NULL)
+    {
+        for (int i = 0; i < opt->current_args_count; i++)
+        {
+            free((*opt_args)[i]);
+        }
+        free(*opt_args);
+    }
 
-    *opt_args = (const char **)malloc(sizeof(char **) * number_of_args);
+    opt->current_args_count = number_of_args;
+    *opt_args = (char **)malloc(sizeof(char **) * number_of_args);
     for (int i = 0; i < number_of_args; i++)
     {
         (*opt_args)[i] = strdup(opt->arguments[opt->current_arg + i]);

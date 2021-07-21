@@ -26,7 +26,7 @@ int main(int argc, const char *argv[])
 {
     opt_t *opt;
     const char *opt_key = NULL;
-    const char **opt_args = NULL;
+    char **opt_args = NULL;
 
     int status = opt_init(&opt, "id:weight:size:filter:", argc, argv);
     if (status != OPT_SUCCESS)
