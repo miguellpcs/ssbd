@@ -125,25 +125,37 @@ WS *init(int size)
     return sketch;
 }
 
-WS *update(WS *sketch, Instance x)
-{ // Update fors simple RS. TODO: add tal update
-    if (sketch->len < sketch->limit)
-    {
-        insert_min_heap(sketch->high, &x);
+WS *update(WS *sketch, Instance *x){  
+    if( sketch->len < sketch->limit){ // Menos elem na amostra que o tamanho limite da amostra. Apenas insere sem nenhuma restrição
+        insert_min_heap(sketch->high,x);
         sketch->count += 1;
-        sketch->len += 1;
+        sketch->len   += 1;
+        return sketch;
     }
+    
+    float wL = sketch->tal * (float) sketch->C->count; // Estima a massa dos pesos do conjunto de elementos leves
 
-    else
-    {
-        sketch->count += 1;
-        int i = uniform_distribution(0, sketch->count);
-        if (i < sketch->limit)
-        {
-            pop_min(sketch->high);
-            insert_min_heap(sketch->high, &x);
-        }
+    Heap *new = malloc(sizeof(Heap)); // Cria uma heap auxiliar para termos um novo conjunto com s+1 elementos
+    new->instances = NULL;
+
+    if (x->weight < sketch->tal){
+        insert_min_heap(new,x);
+        wL += x->weight;
+        
     }
+    else{
+        insert_min_heap(sketch->high,x);
+    }
+    while (sketch->high != NULL && wL >= ((((sketch->limit)-(sketch->high->count))*sketch->high->instances[0].weight))){
+        printf("cu\n");
+        wL += sketch->high->instances[0].weight;
+        insert_min_heap(new, &sketch->high->instances[0]);
+        PopMin(sketch->high);
+    }
+    sketch->tal = wL/((sketch->limit)-(sketch->high->count));
+    // sum_prob = sum_prob_heap();
+
+    
 
     return sketch;
 }
