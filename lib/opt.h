@@ -22,7 +22,7 @@ typedef struct
 
 int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const *argv)
 {
-    if (argc < 0 || argv == NULL || pattern == NULL)
+    if (argc <= 0 || argv == NULL || pattern == NULL)
         return OPT_BADARG;
 
     // Initialize elements

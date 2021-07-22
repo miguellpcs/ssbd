@@ -86,7 +86,6 @@ int main(int argc, const char *argv[])
         if (lines_read == 1)
             continue;
 
-        getline(&buffer, &buffer_size, file);
         read_from_line(parser, buffer);
 
         // Skip if not filtered field

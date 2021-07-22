@@ -8,6 +8,7 @@
 #include "../lib/opt.h"
 
 int uniform_distribution(int, int);
+unsigned int hash(unsigned int);
 
 typedef struct
 {
@@ -81,10 +82,11 @@ int main(int argc, const char *argv[])
         if (lines_read == 1)
             continue;
 
-        getline(&buffer, &buffer_size, file);
         read_from_line(parser, buffer);
 
-        Instance instance = {.val = atoi(parser->line[field_no]), .weight = 1};
+        int value = atoi(parser->line[field_no]);
+        int hash_value = hash(value);
+        Instance instance = {.val = value, .weight = hash_value};
         sketch = update(sketch, instance);
     }
 
@@ -115,11 +117,19 @@ KMV *init(int size)
     return sketch;
 }
 
+unsigned int hash(unsigned int x)
+{
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
 KMV *update(KMV *sketch, Instance x)
 { // Update fors simple RS. TODO: add tal update
     if (sketch->len < sketch->limit)
     {
-        insert_min_heap(sketch->high, &x);
+        insert_max_heap(sketch->high, &x);
         sketch->count += 1;
         sketch->len += 1;
     }
@@ -130,8 +140,8 @@ KMV *update(KMV *sketch, Instance x)
         int i = uniform_distribution(0, sketch->count);
         if (i < sketch->limit)
         {
-            pop_min(sketch->high);
-            insert_min_heap(sketch->high, &x);
+            pop_max(sketch->high);
+            insert_max_heap(sketch->high, &x);
         }
     }
 

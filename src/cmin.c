@@ -100,7 +100,6 @@ int main(int argc, const char *argv[])
         if (lines_read == 1)
             continue;
 
-        getline(&buffer, &buffer_size, file);
         read_from_line(parser, buffer);
 
         Instance instance = {.val = atoi(parser->line[id_field_no]), .weight = atoi(parser->line[weight_field_no])};
