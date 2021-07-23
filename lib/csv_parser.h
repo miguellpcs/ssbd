@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "memory.h"
+
 #define PARSER_ERROR 0
 #define PARSER_SUCCESS 1
 
@@ -26,6 +28,17 @@ int csv_parser_init(csv_parser_t **parser)
     return PARSER_SUCCESS;
 }
 
+void csv_parser_free(csv_parser_t **parser)
+{
+    for (int i = 0; i < (*parser)->keys_count; i++)
+    {
+        check_free((*parser)->keys[i]);
+    }
+    check_free((*parser)->keys);
+    check_free((*parser)->line);
+    check_free(*parser);
+}
+
 int read_from_line(csv_parser_t *parser, char *line)
 {
     // read keys
@@ -44,15 +57,14 @@ int read_from_line(csv_parser_t *parser, char *line)
             return PARSER_ERROR;
 
         // parse keys
-        parser->keys = (char **)malloc(sizeof(char *) * parser->keys_count);
-        parser->line = (char **)malloc(sizeof(char *) * parser->keys_count);
+        parser->keys = (char **)check_malloc(sizeof(char *) * parser->keys_count);
+        parser->line = (char **)check_malloc(sizeof(char *) * parser->keys_count);
 
         char delim[] = ",\n";
         char *ptr = strtok(line, delim);
         int current_key = 0;
         while (ptr != NULL)
         {
-            // TODO(fssn): Check if repeated keys; This parser would be much better with a HashMap<String, String> line by line
             if (ptr[0] == '\0')
                 return PARSER_ERROR;
             parser->keys[current_key] = strdup(ptr);
@@ -75,7 +87,7 @@ int read_from_line(csv_parser_t *parser, char *line)
             if (current_value >= parser->keys_count)
                 return PARSER_ERROR;
 
-            parser->line[current_value] = strdup(ptr);
+            parser->line[current_value] = ptr;
             current_value++;
             ptr = strtok(NULL, delim);
         }

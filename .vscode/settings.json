@@ -2,6 +2,7 @@
     "python.pythonPath": "/home/miguelcs/anaconda3/bin/python",
     "files.associations": {
         "limits": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "instance.h": "c"
     }
 }

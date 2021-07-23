@@ -4,6 +4,7 @@
 #include "../lib/array.h"
 #include "../lib/csv_parser.h"
 #include "../lib/instance.h"
+#include "../lib/memory.h"
 #include "../lib/heap.h"
 #include "../lib/opt.h"
 
@@ -12,14 +13,15 @@ int uniform_distribution(int, int);
 typedef struct ws
 {
     Heap *high;
-    Heap *low;
+    Heap *C;
     float tal;
     int count;
     int limit;
     int len;
 } WS;
 WS *init(int);
-WS *update(WS *, Instance);
+void free_sketch(WS *);
+WS *update(WS *, Instance *);
 int query(WS *);
 
 int main(int argc, const char *argv[])
@@ -37,7 +39,7 @@ int main(int argc, const char *argv[])
     int weight_field_no = 0;
     int size = 0;
     int field_no = 0;
-    const char *field_value = NULL;
+    char *field_value = NULL;
     while (get_opt(opt, &opt_key, &opt_args) == OPT_SUCCESS)
     {
         if (strcmp(opt_key, "id") == 0)
@@ -58,8 +60,9 @@ int main(int argc, const char *argv[])
             field_value = strdup(opt_args[1]);
         }
     }
+    opt_free(&opt);
 
-    const char *filename = strdup(argv[argc - 1]);
+    const char *filename = argv[argc - 1];
     FILE *file = fopen(filename, "r");
 
     csv_parser_t *parser = NULL;
@@ -68,10 +71,9 @@ int main(int argc, const char *argv[])
     {
     }
 
-    char *buffer;
-    size_t buffer_size = 2048;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
 
-    buffer = (char *)malloc(buffer_size * sizeof(char));
     getline(&buffer, &buffer_size, file);
 
     // Read keys from csv
@@ -88,19 +90,18 @@ int main(int argc, const char *argv[])
 
         read_from_line(parser, buffer);
 
-        // Skip if not filtered field
-        if (strcmp(parser->line[field_no], field_value) != 0)
-        {
-            continue;
-        }
-
         Instance instance = {.val = atoi(parser->line[id_field_no]), .weight = atoi(parser->line[weight_field_no])};
-        sketch = update(sketch, instance);
+        sketch = update(sketch, &instance);
     }
 
     int count = query(sketch);
+    printf("%d: %s\n", field_no, field_value);
     printf("Element count: %d\n", count);
 
+    check_free(field_value);
+    csv_parser_free(&parser);
+    free_sketch(sketch);
+    check_free(buffer);
     return 0;
 }
 
@@ -115,47 +116,83 @@ WS *init(int size)
     //sketch->data = malloc(size*sizeof(int));
 
     sketch->high = malloc(sizeof(Heap));
-    sketch->high->instances = malloc(size * sizeof(Instance));
+    sketch->high->instances = malloc((size + 1) * sizeof(Instance));
     sketch->high->count = 0;
 
-    sketch->low = malloc(sizeof(Heap));
-    sketch->low->instances = NULL;
-    sketch->low->count = 0;
+    sketch->C = malloc(sizeof(Heap));
+    sketch->C->instances = NULL;
+    sketch->C->count = 0;
 
     return sketch;
 }
 
-WS *update(WS *sketch, Instance *x){  
-    if( sketch->len < sketch->limit){ // Menos elem na amostra que o tamanho limite da amostra. Apenas insere sem nenhuma restrição
-        insert_min_heap(sketch->high,x);
+void free_sketch(WS *sketch)
+{
+    check_free(sketch->high->instances);
+    check_free(sketch->high);
+    check_free(sketch->C->instances);
+    check_free(sketch->C);
+    check_free(sketch);
+}
+
+WS *update(WS *sketch, Instance *x)
+{
+    if (sketch->len < sketch->limit)
+    { // Menos elem na amostra que o tamanho limite da amostra. Apenas insere sem nenhuma restrição
+        insert_min_heap(sketch->high, x);
         sketch->count += 1;
-        sketch->len   += 1;
+        sketch->len += 1;
         return sketch;
     }
-    
-    float wL = sketch->tal * (float) sketch->C->count; // Estima a massa dos pesos do conjunto de elementos leves
+
+    int wL = sketch->tal * sketch->C->count; // Estima a massa dos pesos do conjunto de elementos leves
 
     Heap *new = malloc(sizeof(Heap)); // Cria uma heap auxiliar para termos um novo conjunto com s+1 elementos
-    new->instances = NULL;
+    new->instances = (Instance *)malloc(sizeof(Instance));
+    new->count = 0;
 
-    if (x->weight < sketch->tal){
-        insert_min_heap(new,x);
+    if (x->weight < sketch->tal)
+    {
+        insert_min_heap(new, x);
         wL += x->weight;
-        
     }
-    else{
-        insert_min_heap(sketch->high,x);
+    else
+    {
+        insert_min_heap(sketch->high, x);
     }
-    while (sketch->high != NULL && wL >= ((((sketch->limit)-(sketch->high->count))*sketch->high->instances[0].weight))){
-        printf("cu\n");
+    while (sketch->high->count != 0 && wL >= (sketch->limit - sketch->high->count) * sketch->high->instances[0].weight)
+    {
         wL += sketch->high->instances[0].weight;
+        new->instances = (Instance *)realloc(new->instances, sizeof(Instance) * (new->count + 1));
         insert_min_heap(new, &sketch->high->instances[0]);
-        PopMin(sketch->high);
+        pop_min(sketch->high);
     }
-    sketch->tal = wL/((sketch->limit)-(sketch->high->count));
-    // sum_prob = sum_prob_heap();
+    sketch->tal = ((float)wL) / ((sketch->limit) - (sketch->high->count));
+    float sum_prob = heap_sum_prob(new, sketch->tal) + heap_sum_prob(sketch->C, sketch->tal);
+    float p = uniform_distribution_real(0, sum_prob);
 
-    
+    int i = 0;
+    for (; i < new->count &&p > 0; i++)
+    {
+        p = p - (1 - new->instances[i].weight / sketch->tal);
+    }
+
+    if (p < 0)
+    {
+        remove_at_min(new, i - 1);
+    }
+    else
+    {
+        remove_at_min(sketch->C, uniform_distribution(0, sketch->C->count - 1));
+    }
+
+    sketch->C->instances = (Instance *)realloc(sketch->C->instances, sizeof(Instance) * (sketch->C->count + new->count));
+    for (i = 0; i < new->count; i++)
+    {
+        insert_min_heap(sketch->C, &new->instances[i]);
+    }
+    free(new->instances);
+    free(new);
 
     return sketch;
 }

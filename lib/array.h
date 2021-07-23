@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "instance.h"
+#include "memory.h"
 
 int uniform_distribution(int rangeLow, int rangeHigh)
 {
@@ -13,6 +14,15 @@ int uniform_distribution(int rangeLow, int rangeHigh)
     double myRand = rand() / (1.0 + RAND_MAX);
     int range = rangeHigh - rangeLow + 1;
     int myRand_scaled = (myRand * range) + rangeLow;
+    return myRand_scaled;
+}
+
+double uniform_distribution_real(double rangeLow, double rangeHigh)
+{
+    srand(time(0));
+    double myRand = rand() / (1.0 + RAND_MAX);
+    double range = rangeHigh - rangeLow + 1;
+    double myRand_scaled = (myRand * range) + rangeLow;
     return myRand_scaled;
 }
 
@@ -24,13 +34,13 @@ typedef struct
 
 Array *create_sample(int size)
 {
-    Instance *data = (Instance *)malloc(size * sizeof(Instance));
+    Instance *data = (Instance *)check_malloc(size * sizeof(Instance));
     for (int i = 0; i < size; i++)
     {
         data[i].val = i;
         data[i].weight = size - i + (uniform_distribution(0, 100));
     }
-    Array *array = (Array *)malloc(1 * sizeof(Array));
+    Array *array = (Array *)check_malloc(1 * sizeof(Array));
     array->data = data;
     array->size = size;
 

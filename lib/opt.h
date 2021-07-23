@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "memory.h"
+
 #define OPT_EOF 0
 #define OPT_BADARG 1
 #define OPT_BADKEY 2
@@ -20,19 +22,19 @@ typedef struct
     int patterns_count;
 } opt_t;
 
-int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const *argv)
+int opt_init(opt_t **opt, char *pattern, const int argc, const char *const *argv)
 {
     if (argc <= 0 || argv == NULL || pattern == NULL)
         return OPT_BADARG;
 
     // Initialize elements
-    *opt = (opt_t *)malloc(sizeof(opt_t));
+    *opt = (opt_t *)check_malloc(sizeof(opt_t));
     (*opt)->total = argc;
     (*opt)->current_arg = 1;
     (*opt)->arguments = argv;
     (*opt)->current_args_count = 0;
 
-    char delim[] = ":";
+    const char delim[] = ":";
     (*opt)->patterns_count = 0;
     // Count occurrences of :
     for (int i = 0; pattern[i] != '\0'; i++)
@@ -42,7 +44,7 @@ int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const
     }
 
     char *pattern_str = strdup(pattern);
-    (*opt)->patterns = (char **)malloc(sizeof(char *) * (*opt)->patterns_count);
+    (*opt)->patterns = (char **)check_malloc(sizeof(char *) * (*opt)->patterns_count);
 
     // Save patterns
     char *ptr = strtok(pattern_str, delim);
@@ -54,7 +56,16 @@ int opt_init(opt_t **opt, const char *pattern, const int argc, const char *const
         ptr = strtok(NULL, delim);
     }
 
+    free(pattern_str);
     return OPT_SUCCESS;
+}
+
+void opt_free(opt_t **opt)
+{
+    for (int i = 0; i < (*opt)->patterns_count; i++)
+        check_free((*opt)->patterns[i]);
+    check_free((*opt)->patterns);
+    check_free(*opt);
 }
 
 int get_opt(opt_t *opt, const char **opt_key, char ***opt_args)
@@ -98,17 +109,14 @@ int get_opt(opt_t *opt, const char **opt_key, char ***opt_args)
     if (number_of_args == 0)
         return OPT_EOF;
 
-    if (opt_args != NULL)
+    for (int i = 0; i < opt->current_args_count; i++)
     {
-        for (int i = 0; i < opt->current_args_count; i++)
-        {
-            free((*opt_args)[i]);
-        }
-        free(*opt_args);
+        check_free((*opt_args)[i]);
     }
+    check_free(*opt_args);
 
     opt->current_args_count = number_of_args;
-    *opt_args = (char **)malloc(sizeof(char **) * number_of_args);
+    *opt_args = (char **)check_malloc(sizeof(char *) * number_of_args);
     for (int i = 0; i < number_of_args; i++)
     {
         (*opt_args)[i] = strdup(opt->arguments[opt->current_arg + i]);

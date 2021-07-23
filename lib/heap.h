@@ -18,25 +18,19 @@ void insert_min_heap(Heap *, Instance *);
 void insert_max_heap(Heap *, Instance *);
 void pop_min(Heap *);
 void pop_max(Heap *);
+void remove_at_min(Heap *heap, int index);
+void remove_at_max(Heap *heap, int index);
+float heap_sum_prob(Heap *, float);
 
 int cmp_heap_min(int a, int b)
 {
-    // a < b, negativo
-    // a == b, zero
-    // a > b, positivo
     return a - b;
 }
 
 int cmp_heap_max(int a, int b)
 {
-    // a > b, negativo
-    // a == b, zero
-    // a < b, positivo
     return b - a;
 }
-
-// if (a < b) => if (cmp(a, b) < 0)
-// if (a > b) => if (cmp(a, b) > 0)
 
 // MARK: - Heap functions
 void insert_heap(Heap *heap, Instance *instance, compare_weight cmp)
@@ -108,14 +102,11 @@ void heapify_top_bottom(Heap *heap, int parent_node, compare_weight cmp)
 
 void pop(Heap *heap, compare_weight cmp)
 {
-    // Instance _pop;
     if (heap->count == 0)
     {
-        printf("\n__Heap is Empty__\n");
         return;
     }
 
-    // _pop = heap->instances[0];
     heap->instances[0] = heap->instances[heap->count - 1];
     heap->count--;
     heapify_top_bottom(heap, 0, cmp);
@@ -130,6 +121,46 @@ void pop_min(Heap *heap)
 void pop_max(Heap *heap)
 {
     pop(heap, cmp_heap_max);
+}
+
+void remove_at(Heap *heap, int index, compare_weight cmp)
+{
+    if (heap->count == 0)
+    {
+        return;
+    }
+
+    heap->instances[index] = heap->instances[heap->count - 1];
+    heap->count--;
+    heapify_top_bottom(heap, index, cmp);
+    return;
+}
+
+void remove_at_min(Heap *heap, int index)
+{
+    remove_at(heap, index, cmp_heap_min);
+}
+
+void remove_at_max(Heap *heap, int index)
+{
+    remove_at(heap, index, cmp_heap_max);
+}
+
+float heap_sum_prob(Heap *heap, float tal)
+{
+    float total = 0.0f;
+
+    for (int i = 0; i < heap->count; i++)
+    {
+        float prob = 1 - (heap->instances[i].weight / tal);
+        if (tal == 0.0f)
+        {
+            prob = 0;
+        }
+        total += prob;
+    }
+
+    return total;
 }
 
 #endif

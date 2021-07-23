@@ -13,7 +13,7 @@ unsigned int hash(unsigned int);
 typedef struct
 {
     Heap *high;
-    Heap *low;
+    Heap *C;
     float tal;
     int count;
     int limit;
@@ -110,9 +110,9 @@ KMV *init(int size)
     sketch->high->instances = malloc(size * sizeof(Instance));
     sketch->high->count = 0;
 
-    sketch->low = malloc(sizeof(Heap));
-    sketch->low->instances = NULL;
-    sketch->low->count = 0;
+    sketch->C = malloc(sizeof(Heap));
+    sketch->C->instances = NULL;
+    sketch->C->count = 0;
 
     return sketch;
 }
