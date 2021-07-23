@@ -5,6 +5,7 @@
 #include "../lib/csv_parser.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
+#include "../lib/memory.h"
 #include "../lib/opt.h"
 
 int uniform_distribution(int, int);
@@ -12,13 +13,13 @@ int uniform_distribution(int, int);
 typedef struct
 {
     Heap *high;
-    Heap *C;
     float tal;
     int count;
     int limit;
     int len;
 } CMin;
 CMin *init(int);
+void free_sketch(CMin *);
 CMin *update(CMin *, Instance);
 int query(CMin *);
 
@@ -80,10 +81,9 @@ int main(int argc, const char *argv[])
     {
     }
 
-    char *buffer;
-    size_t buffer_size = 2048;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
 
-    buffer = (char *)malloc(buffer_size * sizeof(char));
     getline(&buffer, &buffer_size, file);
 
     // Read keys from csv
@@ -109,32 +109,39 @@ int main(int argc, const char *argv[])
     int count = query(sketch);
     printf("Element count: %d\n", count);
 
+    check_free(queries);
+    check_free(query_filename);
+    csv_parser_free(&parser);
+    free_sketch(sketch);
+    check_free(buffer);
     return 0;
 }
 
 // MARK - CMin functions
 CMin *init(int size)
 {
-    CMin *sketch = malloc(sizeof(CMin));
+    CMin *sketch = check_malloc(sizeof(CMin));
     sketch->count = 0;
     sketch->len = 0;
     sketch->tal = 0;
     sketch->limit = size;
-    //sketch->data = malloc(size*sizeof(int));
 
-    sketch->high = malloc(sizeof(Heap));
-    sketch->high->instances = malloc(size * sizeof(Instance));
+    sketch->high = check_malloc(sizeof(Heap));
+    sketch->high->instances = check_malloc(size * sizeof(Instance));
     sketch->high->count = 0;
-
-    sketch->C = malloc(sizeof(Heap));
-    sketch->C->instances = NULL;
-    sketch->C->count = 0;
 
     return sketch;
 }
 
+void free_sketch(CMin *sketch)
+{
+    check_free(sketch->high->instances);
+    check_free(sketch->high);
+    check_free(sketch);
+}
+
 CMin *update(CMin *sketch, Instance x)
-{ // Update fors simple RS. TODO: add tal update
+{
     if (sketch->len < sketch->limit)
     {
         insert_min_heap(sketch->high, &x);

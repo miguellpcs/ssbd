@@ -5,6 +5,7 @@
 #include "../lib/csv_parser.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
+#include "../lib/memory.h"
 #include "../lib/opt.h"
 
 int uniform_distribution(int, int);
@@ -13,13 +14,13 @@ unsigned int hash(unsigned int);
 typedef struct
 {
     Heap *high;
-    Heap *C;
     float tal;
     int count;
     int limit;
     int len;
 } KMV;
 KMV *init(int);
+void free_sketch(KMV *);
 KMV *update(KMV *, Instance);
 int query(KMV *);
 
@@ -52,6 +53,7 @@ int main(int argc, const char *argv[])
             error_probability = atof(opt_args[0]);
         }
     }
+    opt_free(&opt);
 
     const char *filename = strdup(argv[argc - 1]);
     FILE *file = fopen(filename, "r");
@@ -62,10 +64,9 @@ int main(int argc, const char *argv[])
     {
     }
 
-    char *buffer;
-    size_t buffer_size = 2048;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
 
-    buffer = (char *)malloc(buffer_size * sizeof(char));
     getline(&buffer, &buffer_size, file);
 
     // Read keys from csv
@@ -99,22 +100,24 @@ int main(int argc, const char *argv[])
 // MARK - KMV functions
 KMV *init(int size)
 {
-    KMV *sketch = malloc(sizeof(KMV));
+    KMV *sketch = check_malloc(sizeof(KMV));
     sketch->count = 0;
     sketch->len = 0;
     sketch->tal = 0;
     sketch->limit = size;
-    //sketch->data = malloc(size*sizeof(int));
 
-    sketch->high = malloc(sizeof(Heap));
-    sketch->high->instances = malloc(size * sizeof(Instance));
+    sketch->high = check_malloc(sizeof(Heap));
+    sketch->high->instances = check_malloc((size + 1) * sizeof(Instance));
     sketch->high->count = 0;
 
-    sketch->C = malloc(sizeof(Heap));
-    sketch->C->instances = NULL;
-    sketch->C->count = 0;
-
     return sketch;
+}
+
+void free_sketch(KMV *sketch)
+{
+    check_free(sketch->high->instances);
+    check_free(sketch->high);
+    check_free(sketch);
 }
 
 unsigned int hash(unsigned int x)
@@ -126,14 +129,13 @@ unsigned int hash(unsigned int x)
 }
 
 KMV *update(KMV *sketch, Instance x)
-{ // Update fors simple RS. TODO: add tal update
+{
     if (sketch->len < sketch->limit)
     {
         insert_max_heap(sketch->high, &x);
         sketch->count += 1;
         sketch->len += 1;
     }
-
     else
     {
         sketch->count += 1;

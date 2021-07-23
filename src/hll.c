@@ -5,6 +5,7 @@
 #include "../lib/csv_parser.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
+#include "../lib/memory.h"
 #include "../lib/opt.h"
 
 int uniform_distribution(int, int);
@@ -12,13 +13,13 @@ int uniform_distribution(int, int);
 typedef struct
 {
     Heap *high;
-    Heap *C;
     float tal;
     int count;
     int limit;
     int len;
 } HLL;
 HLL *init(int);
+void free_sketch(HLL *);
 HLL *update(HLL *, Instance);
 int query(HLL *);
 
@@ -51,6 +52,7 @@ int main(int argc, const char *argv[])
             error_probability = atof(opt_args[0]);
         }
     }
+    opt_free(&opt);
 
     const char *filename = strdup(argv[argc - 1]);
     FILE *file = fopen(filename, "r");
@@ -61,10 +63,9 @@ int main(int argc, const char *argv[])
     {
     }
 
-    char *buffer;
-    size_t buffer_size = 2048;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
 
-    buffer = (char *)malloc(buffer_size * sizeof(char));
     getline(&buffer, &buffer_size, file);
 
     // Read keys from csv
@@ -90,28 +91,33 @@ int main(int argc, const char *argv[])
     int count = query(sketch);
     printf("Element count: %d\n", count);
 
+    csv_parser_free(&parser);
+    free_sketch(sketch);
+    check_free(buffer);
     return 0;
 }
 
 // MARK - HLL functions
 HLL *init(int size)
 {
-    HLL *sketch = malloc(sizeof(HLL));
+    HLL *sketch = check_malloc(sizeof(HLL));
     sketch->count = 0;
     sketch->len = 0;
     sketch->tal = 0;
     sketch->limit = size;
-    //sketch->data = malloc(size*sizeof(int));
 
-    sketch->high = malloc(sizeof(Heap));
-    sketch->high->instances = malloc(size * sizeof(Instance));
+    sketch->high = check_malloc(sizeof(Heap));
+    sketch->high->instances = check_malloc((size + 1) * sizeof(Instance));
     sketch->high->count = 0;
 
-    sketch->C = malloc(sizeof(Heap));
-    sketch->C->instances = NULL;
-    sketch->C->count = 0;
-
     return sketch;
+}
+
+void free_sketch(HLL *sketch)
+{
+    check_free(sketch->high->instances);
+    check_free(sketch->high);
+    check_free(sketch);
 }
 
 HLL *update(HLL *sketch, Instance x)

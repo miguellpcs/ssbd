@@ -108,18 +108,17 @@ int main(int argc, const char *argv[])
 // MARK - Weighted Sampling functions
 WS *init(int size)
 {
-    WS *sketch = malloc(sizeof(WS));
+    WS *sketch = check_malloc(sizeof(WS));
     sketch->count = 0;
     sketch->len = 0;
     sketch->tal = 0;
     sketch->limit = size;
-    //sketch->data = malloc(size*sizeof(int));
 
-    sketch->high = malloc(sizeof(Heap));
-    sketch->high->instances = malloc((size + 1) * sizeof(Instance));
+    sketch->high = check_malloc(sizeof(Heap));
+    sketch->high->instances = check_malloc((size + 1) * sizeof(Instance));
     sketch->high->count = 0;
 
-    sketch->C = malloc(sizeof(Heap));
+    sketch->C = check_malloc(sizeof(Heap));
     sketch->C->instances = NULL;
     sketch->C->count = 0;
 
@@ -148,7 +147,7 @@ WS *update(WS *sketch, Instance *x)
     int wL = sketch->tal * sketch->C->count; // Estima a massa dos pesos do conjunto de elementos leves
 
     Heap *new = malloc(sizeof(Heap)); // Cria uma heap auxiliar para termos um novo conjunto com s+1 elementos
-    new->instances = (Instance *)malloc(sizeof(Instance));
+    new->instances = (Instance *)check_malloc(sizeof(Instance));
     new->count = 0;
 
     if (x->weight < sketch->tal)
@@ -163,7 +162,7 @@ WS *update(WS *sketch, Instance *x)
     while (sketch->high->count != 0 && wL >= (sketch->limit - sketch->high->count) * sketch->high->instances[0].weight)
     {
         wL += sketch->high->instances[0].weight;
-        new->instances = (Instance *)realloc(new->instances, sizeof(Instance) * (new->count + 1));
+        new->instances = (Instance *)check_realloc(new->instances, sizeof(Instance) * (new->count + 1));
         insert_min_heap(new, &sketch->high->instances[0]);
         pop_min(sketch->high);
     }
@@ -186,7 +185,7 @@ WS *update(WS *sketch, Instance *x)
         remove_at_min(sketch->C, uniform_distribution(0, sketch->C->count - 1));
     }
 
-    sketch->C->instances = (Instance *)realloc(sketch->C->instances, sizeof(Instance) * (sketch->C->count + new->count));
+    sketch->C->instances = (Instance *)check_realloc(sketch->C->instances, sizeof(Instance) * (sketch->C->count + new->count));
     for (i = 0; i < new->count; i++)
     {
         insert_min_heap(sketch->C, &new->instances[i]);
