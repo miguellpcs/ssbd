@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Launch WS",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/ws",
@@ -20,6 +20,33 @@
                 "--size",
                 "1024",
                 "../network_flows_unique.csv"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb) Launch KMV",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/kmv",
+            "args": [
+                "--target",
+                "7",
+                "--eps",
+                "0.05",
+                "--delta",
+                "0.01",
+                "../network_flows.csv"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

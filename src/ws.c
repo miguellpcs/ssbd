@@ -185,10 +185,14 @@ WS *update(WS *sketch, Instance *x)
         remove_at_min(sketch->C, uniform_distribution(0, sketch->C->count - 1));
     }
 
-    sketch->C->instances = (Instance *)check_realloc(sketch->C->instances, sizeof(Instance) * (sketch->C->count + new->count));
-    for (i = 0; i < new->count; i++)
+    int new_size = sketch->C->count + new->count;
+    if (new_size > 0)
     {
-        insert_min_heap(sketch->C, &new->instances[i]);
+        sketch->C->instances = (Instance *)check_realloc(sketch->C->instances, sizeof(Instance) * new_size);
+        for (i = 0; i < new->count; i++)
+        {
+            insert_min_heap(sketch->C, &new->instances[i]);
+        }
     }
     free(new->instances);
     free(new);

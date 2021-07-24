@@ -3,7 +3,7 @@
 
 typedef struct instance
 {
-    int val;
-    int weight;
+    unsigned int val;
+    unsigned int weight;
 } Instance;
 #endif

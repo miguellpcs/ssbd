@@ -21,7 +21,10 @@ void *check_realloc(void *ptr, size_t size)
 void check_free(void *ptr)
 {
     if (ptr != NULL)
+    {
         free(ptr);
+        ptr = NULL;
+    }
 }
 
 #endif

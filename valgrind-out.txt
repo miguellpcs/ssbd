@@ -1,0 +1,258 @@
+==25265== Memcheck, a memory error detector
+==25265== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==25265== Using Valgrind-3.15.0-608cb11914-20190413 and LibVEX; rerun with -h for copyright info
+==25265== Command: ./bin/kmv --target 0 --eps 0.05 --delta 0.01 network_flows.csv
+==25265== Parent PID: 29724
+==25265== 
+--25265-- 
+--25265-- Valgrind options:
+--25265--    --leak-check=full
+--25265--    --show-leak-kinds=all
+--25265--    --track-origins=yes
+--25265--    --verbose
+--25265--    --log-file=valgrind-out.txt
+--25265-- Contents of /proc/version:
+--25265--   Linux version 5.4.72-microsoft-standard-WSL2 (oe-user@oe-host) (gcc version 8.2.0 (GCC)) #1 SMP Wed Oct 28 23:40:43 UTC 2020
+--25265-- 
+--25265-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-ssse3-avx-avx2-bmi-f16c-rdrand
+--25265-- Page sizes: currently 4096, max supported 4096
+--25265-- Valgrind library directory: /usr/lib/x86_64-linux-gnu/valgrind
+--25265-- Reading syms from /mnt/c/Users/franc/Projects/C/ssbd/bin/kmv
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/ld-2.31.so
+--25265--   Considering /usr/lib/x86_64-linux-gnu/ld-2.31.so ..
+--25265--   .. CRC mismatch (computed 975d0390 wanted 30bd717f)
+--25265--   Considering /lib/x86_64-linux-gnu/ld-2.31.so ..
+--25265--   .. CRC mismatch (computed 975d0390 wanted 30bd717f)
+--25265--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/ld-2.31.so ..
+--25265--   .. CRC is valid
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux
+--25265--    object doesn't have a symbol table
+--25265--    object doesn't have a dynamic symbol table
+--25265-- Scheduler: using generic scheduler lock implementation.
+--25265-- Reading suppressions file: /usr/lib/x86_64-linux-gnu/valgrind/default.supp
+==25265== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-25265-by-forbidden404-on-???
+==25265== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-25265-by-forbidden404-on-???
+==25265== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-25265-by-forbidden404-on-???
+==25265== 
+==25265== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==25265== don't want to do, unless you know exactly what you're doing,
+==25265== or are doing some strange experiment):
+==25265==   /usr/lib/x86_64-linux-gnu/valgrind/../../bin/vgdb --pid=25265 ...command...
+==25265== 
+==25265== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==25265==   /path/to/gdb ./bin/kmv
+==25265== and then give GDB the following command
+==25265==   target remote | /usr/lib/x86_64-linux-gnu/valgrind/../../bin/vgdb --pid=25265
+==25265== --pid is optional if only one valgrind process is running
+==25265== 
+--25265-- REDIR: 0x4022e10 (ld-linux-x86-64.so.2:strlen) redirected to 0x580c9ce2 (???)
+--25265-- REDIR: 0x4022be0 (ld-linux-x86-64.so.2:index) redirected to 0x580c9cfc (???)
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_core-amd64-linux.so
+--25265--    object doesn't have a symbol table
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so
+--25265--    object doesn't have a symbol table
+==25265== WARNING: new redirection conflicts with existing -- ignoring it
+--25265--     old: 0x04022e10 (strlen              ) R-> (0000.0) 0x580c9ce2 ???
+--25265--     new: 0x04022e10 (strlen              ) R-> (2007.0) 0x0483f060 strlen
+--25265-- REDIR: 0x401f5f0 (ld-linux-x86-64.so.2:strcmp) redirected to 0x483ffd0 (strcmp)
+--25265-- REDIR: 0x4023370 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4843a20 (mempcpy)
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/libm-2.31.so
+--25265--   Considering /usr/lib/x86_64-linux-gnu/libm-2.31.so ..
+--25265--   .. CRC mismatch (computed fcb42c76 wanted f6c95789)
+--25265--   Considering /lib/x86_64-linux-gnu/libm-2.31.so ..
+--25265--   .. CRC mismatch (computed fcb42c76 wanted f6c95789)
+--25265--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/libm-2.31.so ..
+--25265--   .. CRC is valid
+--25265-- Reading syms from /usr/lib/x86_64-linux-gnu/libc-2.31.so
+--25265--   Considering /usr/lib/x86_64-linux-gnu/libc-2.31.so ..
+--25265--   .. CRC mismatch (computed 86b78530 wanted e380f01c)
+--25265--   Considering /lib/x86_64-linux-gnu/libc-2.31.so ..
+--25265--   .. CRC mismatch (computed 86b78530 wanted e380f01c)
+--25265--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/libc-2.31.so ..
+--25265--   .. CRC is valid
+--25265-- REDIR: 0x4a47600 (libc.so.6:memmove) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46900 (libc.so.6:strncpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47930 (libc.so.6:strcasecmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46220 (libc.so.6:strcat) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46960 (libc.so.6:rindex) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a48dd0 (libc.so.6:rawmemchr) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a63e60 (libc.so.6:wmemchr) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a639a0 (libc.so.6:wcscmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47760 (libc.so.6:mempcpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47590 (libc.so.6:bcmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46890 (libc.so.6:strncmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a462d0 (libc.so.6:strcmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a476c0 (libc.so.6:memset) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a63960 (libc.so.6:wcschr) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a467f0 (libc.so.6:strnlen) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a463b0 (libc.so.6:strcspn) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47980 (libc.so.6:strncasecmp) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46350 (libc.so.6:strcpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47ad0 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a650d0 (libc.so.6:wcsnlen) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a639e0 (libc.so.6:wcscpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a469a0 (libc.so.6:strpbrk) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46280 (libc.so.6:index) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a467b0 (libc.so.6:strlen) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a4fd20 (libc.so.6:memrchr) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a479d0 (libc.so.6:strcasecmp_l) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47550 (libc.so.6:memchr) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a63ab0 (libc.so.6:wcslen) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a46c60 (libc.so.6:strspn) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a478d0 (libc.so.6:stpncpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47870 (libc.so.6:stpcpy) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a48e10 (libc.so.6:strchrnul) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4a47a20 (libc.so.6:strncasecmp_l) redirected to 0x48311d0 (_vgnU_ifunc_wrapper)
+--25265-- REDIR: 0x4b2f490 (libc.so.6:__strrchr_avx2) redirected to 0x483ea10 (rindex)
+--25265-- REDIR: 0x4a41260 (libc.so.6:malloc) redirected to 0x483b780 (malloc)
+--25265-- REDIR: 0x4b2f660 (libc.so.6:__strlen_avx2) redirected to 0x483ef40 (strlen)
+--25265-- REDIR: 0x4b32670 (libc.so.6:__memcpy_avx_unaligned_erms) redirected to 0x48429f0 (memmove)
+--25265-- REDIR: 0x4b2aa30 (libc.so.6:__strspn_sse42) redirected to 0x4843ef0 (strspn)
+--25265-- REDIR: 0x4b2a7b0 (libc.so.6:__strcspn_sse42) redirected to 0x4843e10 (strcspn)
+--25265-- REDIR: 0x4a41850 (libc.so.6:free) redirected to 0x483c9d0 (free)
+--25265-- REDIR: 0x4b2ab60 (libc.so.6:__strcmp_avx2) redirected to 0x483fed0 (strcmp)
+--25265-- REDIR: 0x4a47120 (libc.so.6:__GI_strstr) redirected to 0x4843ca0 (__strstr_sse2)
+--25265-- REDIR: 0x4b2b4c0 (libc.so.6:__memchr_avx2) redirected to 0x4840050 (memchr)
+--25265-- REDIR: 0x4a42000 (libc.so.6:realloc) redirected to 0x483df30 (realloc)
+==25265== 
+==25265== Process terminating with default action of signal 2 (SIGINT)
+==25265==    at 0x49EEB09: __random_r (random_r.c:362)
+==25265==    by 0x49EEB09: srandom_r (random_r.c:206)
+==25265==    by 0x49EE76C: srand (random.c:211)
+==25265==    by 0x10AE3F: main (kmv.c:100)
+==25265== 
+==25265== HEAP SUMMARY:
+==25265==     in use at exit: 140,823,969 bytes in 5,435,723 blocks
+==25265==   total heap usage: 21,770,006 allocs, 16,334,283 frees, 532,850,811 bytes allocated
+==25265== 
+==25265== Searching for pointers to 5,435,723 not-freed blocks
+==25265== Checked 97,417,704 bytes
+==25265== 
+==25265== 16 bytes in 1 blocks are still reachable in loss record 1 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A386: get_opt (opt.h:119)
+==25265==    by 0x10AC3D: main (kmv.c:43)
+==25265== 
+==25265== 18 bytes in 1 blocks are still reachable in loss record 2 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x4A4650E: strdup (strdup.c:42)
+==25265==    by 0x10AC7A: main (kmv.c:60)
+==25265== 
+==25265== 23 bytes in 2 blocks are still reachable in loss record 3 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x4A4650E: strdup (strdup.c:42)
+==25265==    by 0x10A3D3: get_opt (opt.h:122)
+==25265==    by 0x10AC3D: main (kmv.c:43)
+==25265== 
+==25265== 24 bytes in 1 blocks are still reachable in loss record 4 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1096B1: csv_parser_init (csv_parser.h:21)
+==25265==    by 0x10ACAF: main (kmv.c:64)
+==25265== 
+==25265== 72 bytes in 1 blocks are still reachable in loss record 5 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10983F: read_from_line (csv_parser.h:60)
+==25265==    by 0x10ACFF: main (kmv.c:76)
+==25265== 
+==25265== 72 bytes in 1 blocks are still reachable in loss record 6 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10985B: read_from_line (csv_parser.h:61)
+==25265==    by 0x10ACFF: main (kmv.c:76)
+==25265== 
+==25265== 144 bytes in 1 blocks are still reachable in loss record 7 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10AD6F: main (kmv.c:82)
+==25265== 
+==25265== 152 bytes in 9 blocks are still reachable in loss record 8 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x4A4650E: strdup (strdup.c:42)
+==25265==    by 0x1098C3: read_from_line (csv_parser.h:70)
+==25265==    by 0x10ACFF: main (kmv.c:76)
+==25265== 
+==25265== 240 bytes in 1 blocks are still reachable in loss record 9 of 19
+==25265==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x4A2A71D: getdelim (iogetdelim.c:102)
+==25265==    by 0x10ACE2: main (kmv.c:73)
+==25265== 
+==25265== 288 bytes in 18 blocks are still reachable in loss record 10 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A8C3: set_init (set.h:15)
+==25265==    by 0x10B2AF: init (kmv.c:178)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 288 bytes in 18 blocks are still reachable in loss record 11 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10B2F8: init (kmv.c:182)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 472 bytes in 1 blocks are still reachable in loss record 12 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x4A29AAD: __fopen_internal (iofopen.c:65)
+==25265==    by 0x4A29AAD: fopen@@GLIBC_2.2.5 (iofopen.c:86)
+==25265==    by 0x10AC91: main (kmv.c:61)
+==25265== 
+==25265== 576 bytes in 18 blocks are still reachable in loss record 13 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10B2A1: init (kmv.c:177)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 1,151,856 bytes in 18 blocks are still reachable in loss record 14 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A8E0: set_init (set.h:17)
+==25265==    by 0x10B2AF: init (kmv.c:178)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 1,152,000 bytes in 18 blocks are still reachable in loss record 15 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10B31A: init (kmv.c:183)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 3,455,568 bytes in 143,982 blocks are still reachable in loss record 16 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A43A: sentinel_init (sentinel.h:52)
+==25265==    by 0x10A90A: set_init (set.h:20)
+==25265==    by 0x10B2AF: init (kmv.c:178)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 3,455,568 bytes in 143,982 blocks are still reachable in loss record 17 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A44B: sentinel_init (sentinel.h:53)
+==25265==    by 0x10A90A: set_init (set.h:20)
+==25265==    by 0x10B2AF: init (kmv.c:178)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 11,518,560 bytes in 143,982 blocks are still reachable in loss record 18 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A42C: sentinel_init (sentinel.h:51)
+==25265==    by 0x10A90A: set_init (set.h:20)
+==25265==    by 0x10B2AF: init (kmv.c:178)
+==25265==    by 0x10ADA9: main (kmv.c:85)
+==25265== 
+==25265== 120,088,032 bytes in 5,003,668 blocks are still reachable in loss record 19 of 19
+==25265==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==25265==    by 0x1093C4: check_malloc (memory.h:9)
+==25265==    by 0x10A524: new_node (sentinel.h:74)
+==25265==    by 0x10A9F3: set_insert (set.h:43)
+==25265==    by 0x10B5C7: update (kmv.c:274)
+==25265==    by 0x10AEB4: main (kmv.c:103)
+==25265== 
+==25265== LEAK SUMMARY:
+==25265==    definitely lost: 0 bytes in 0 blocks
+==25265==    indirectly lost: 0 bytes in 0 blocks
+==25265==      possibly lost: 0 bytes in 0 blocks
+==25265==    still reachable: 140,823,969 bytes in 5,435,723 blocks
+==25265==         suppressed: 0 bytes in 0 blocks
+==25265== 
+==25265== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
