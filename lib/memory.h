@@ -11,6 +11,13 @@ void *check_malloc(size_t size)
     return mem;
 }
 
+void *check_calloc(size_t n, size_t size)
+{
+    void *mem = calloc(n, size);
+    assert(mem != NULL);
+    return mem;
+}
+
 void *check_realloc(void *ptr, size_t size)
 {
     void *mem = realloc(ptr, size);

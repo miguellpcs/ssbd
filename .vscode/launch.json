@@ -43,9 +43,9 @@
                 "--target",
                 "7",
                 "--eps",
-                "0.05",
+                "0.00",
                 "--delta",
-                "0.01",
+                "0.00",
                 "../network_flows.csv"
             ],
             "stopAtEntry": false,

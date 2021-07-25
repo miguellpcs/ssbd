@@ -1,9 +1,11 @@
 #ifndef instance_h
 #define instance_h
 
+#include <stdint.h>
+
 typedef struct instance
 {
-    unsigned int val;
-    unsigned int weight;
+    uint32_t val;
+    uint32_t weight;
 } Instance;
 #endif

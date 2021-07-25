@@ -17,169 +17,117 @@ typedef struct Sentinel
     Node *head;
     Node *tail;
     unsigned int length;
-
-    void (*insert)(struct Sentinel *self, Node *t, Node *x);
-    unsigned int (*del)(struct Sentinel *self, Node *t);
-    Node *(*search)(struct Sentinel *self, unsigned int element);
-
-    void (*push)(struct Sentinel *self, Node *t);
-    unsigned int (*pop)(struct Sentinel *self);
-
-    void (*enqueue)(struct Sentinel *self, Node *t);
-    unsigned int (*dequeue)(struct Sentinel *self);
 } Sentinel;
 
 unsigned int get_length(Sentinel *);
 Sentinel *sentinel_init(void);
 Node *new_node(unsigned int);
-void free_sentinel(Sentinel *);
+void sentinel_destroy(Sentinel *);
 
-void sentinel_insert(Sentinel *, Node *, Node *);
-unsigned int sentinel_delete(Sentinel *, Node *);
 Node *sentinel_search(Sentinel *, unsigned int);
 
 void sentinel_push(Sentinel *, Node *);
 unsigned int sentinel_pop(Sentinel *);
 
-void sentinel_enqueue(Sentinel *, Node *);
-unsigned int sentinel_dequeue(Sentinel *);
+#define SENTINEL_FOREACH(L, S, M, V) \
+    Node *_node = NULL;              \
+    Node *V = NULL;                  \
+    for (V = _node = L->S; _node != NULL; V = _node = _node->M)
 
-unsigned int get_length(Sentinel *self) { return self->length; }
+unsigned int get_length(Sentinel *self)
+{
+    return self->length;
+}
 
 Sentinel *sentinel_init(void)
 {
-    Sentinel *tmp = (Sentinel *)check_malloc(sizeof(Sentinel));
-    tmp->head = (Node *)check_malloc(sizeof(Node));
-    tmp->tail = (Node *)check_malloc(sizeof(Node));
-    tmp->head->next = tmp->tail->next = NULL;
-    tmp->head->before = tmp->tail->before = NULL;
-
-    tmp->insert = sentinel_insert;
-    tmp->del = sentinel_delete;
-    tmp->search = sentinel_search;
-
-    tmp->push = sentinel_push;
-    tmp->pop = sentinel_pop;
-
-    tmp->enqueue = sentinel_enqueue;
-    tmp->dequeue = sentinel_dequeue;
-
-    tmp->length = 0;
-
-    return tmp;
+    return check_calloc(1, sizeof(Sentinel));
 }
 
 Node *new_node(unsigned int value)
 {
-    Node *tmp = (Node *)check_malloc(sizeof(Node));
-    tmp->next = NULL;
-    tmp->before = NULL;
+    Node *tmp = (Node *)check_calloc(1, sizeof(Node));
     tmp->element = value;
-
     return tmp;
 }
 
-void free_sentinel(Sentinel *self)
+void sentinel_destroy(Sentinel *self)
 {
-    Node *tmp = self->head->next;
-    while (tmp != NULL)
+    SENTINEL_FOREACH(self, head, next, cur)
     {
-        if (self->head->next->next != NULL)
-        {
-            tmp = self->head->next->next;
-        }
-        else
-        {
-            tmp = NULL;
-        }
-        check_free(self->head->next);
+        if (cur->before)
+            check_free(cur->before);
     }
-    check_free(self->head);
+
     check_free(self->tail);
     check_free(self);
 }
 
-void sentinel_insert(Sentinel *self, Node *tmp, Node *x)
+Node *sentinel_search(Sentinel *self, unsigned int value)
 {
-    if (self->length == 0)
+    SENTINEL_FOREACH(self, head, next, cur)
     {
-        self->head->next = self->tail->next = tmp;
+        if (cur->element == value)
+        {
+            return cur;
+        }
     }
-    else if (x == self->tail->next)
+    return NULL;
+}
+
+void sentinel_push(Sentinel *self, Node *tmp)
+{
+    if (self->tail == NULL)
     {
-        tmp->before = self->tail->next;
-        self->tail->next->next = tmp;
-        self->tail->next = tmp;
+        self->head = tmp;
+        self->tail = tmp;
     }
     else
     {
-        tmp->before = x;
-        tmp->next = x->next;
-        x->next = tmp;
-        tmp->next->before = tmp;
+        self->tail->next = tmp;
+        tmp->before = self->tail;
+        self->tail = tmp;
     }
 
     self->length++;
 }
 
-unsigned int sentinel_delete(Sentinel *self, Node *x)
+unsigned int sentinel_delete(Sentinel *self, Node *node)
 {
-    Node *tmp;
-    if (self->head->next == NULL || x->next == NULL || self->length == 0)
-        return 0;
+    if (node == self->head && node == self->tail)
+    {
+        self->head = NULL;
+        self->tail = NULL;
+    }
+    else if (node == self->head)
+    {
+        self->head = node->next;
+        self->head->before = NULL;
+    }
+    else if (node == self->tail)
+    {
+        self->tail = node->before;
+        self->tail->next = NULL;
+    }
     else
     {
-        tmp = x->next;
-        if (tmp->next == NULL)
-        {
-            self->tail->next = x;
-            x->next = NULL;
-        }
-        else
-        {
-            x->next = tmp->next;
-            tmp->next->before = x;
-        }
-        self->length--;
+        Node *next = node->next;
+        Node *before = node->before;
+        next->before = before;
+        before->next = next;
     }
-    unsigned int value = tmp->element;
-    check_free(tmp);
+
+    self->length--;
+    unsigned int value = node->element;
+    check_free(node);
+
     return value;
-}
-
-Node *sentinel_search(Sentinel *self, unsigned int value)
-{
-    Node *tmp = self->head->next;
-
-    for (; tmp && tmp->element != value;)
-    {
-        if (tmp->next)
-            tmp = tmp->next;
-        else
-            return NULL;
-    }
-
-    return tmp;
-}
-
-void sentinel_push(Sentinel *self, Node *tmp)
-{
-    sentinel_insert(self, tmp, self->head->next);
 }
 
 unsigned int sentinel_pop(Sentinel *self)
 {
-    return sentinel_delete(self, self->head->next);
-}
-
-void sentinel_enqueue(Sentinel *self, Node *tmp)
-{
-    sentinel_insert(self, tmp, self->head->next);
-}
-
-unsigned int sentinel_dequeue(Sentinel *self)
-{
-    return sentinel_delete(self, self->tail->next);
+    Node *node = self->tail;
+    return node != NULL ? sentinel_delete(self, node) : 0;
 }
 
 #endif // sentinel_h

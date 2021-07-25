@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,20 +12,26 @@
 #include "../lib/set.h"
 
 int uniform_distribution(int, int);
-double kthSmallest(double *arr, int l, int r, int k);
-unsigned int murmurhash(unsigned int *key, unsigned int len, unsigned int seed);
+uint64_t kthSmallest(uint64_t *arr, int l, int r, int k);
+uint32_t paghash(uint32_t, uint32_t, uint32_t);
+uint32_t murmurhash(uint32_t *key, uint32_t len, uint32_t seed);
 
 typedef struct
 {
     Heap *heap;
     Set *set;
-    double r;
-    unsigned int k;
+    uint32_t r;
+    uint64_t k;
 } KMV;
-KMV *init(unsigned int, unsigned int);
+KMV *init(uint64_t, uint32_t);
 void free_sketch(KMV *);
-KMV *update(KMV *, Instance);
-double query(KMV *);
+KMV *update(KMV *, Instance *);
+uint32_t query(KMV *);
+
+uint64_t u64_max(uint64_t lhs, uint64_t rhs)
+{
+    return lhs > rhs ? lhs : rhs;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -76,14 +83,35 @@ int main(int argc, const char *argv[])
     read_from_line(parser, buffer);
 
     // Define K
-    unsigned int k = 20 / pow(error_bound, 2.0);
-    unsigned int n = 4 * log(1.0 / error_probability);
+    uint64_t k;
+    if (error_bound == 0.0)
+    {
+        k = (uint64_t)1 << 18;
+    }
+    else
+    {
+        k = ceil(1 / (pow(error_bound, 2.0)));
+    }
+    uint32_t n;
+    if (error_probability == 0)
+    {
+        n = 1;
+    }
+    else
+    {
+        n = 2 * log(1.0 / error_probability);
+    }
 
     KMV **sketches = (KMV **)check_malloc(sizeof(KMV *) * n);
     for (int i = 0; i < n; i++)
     {
-        sketches[i] = init(k, 0x85ebca6b);
+        sketches[i] = init(k, UINT32_MAX);
     }
+
+    Set *unique = set_init(1 << 18);
+
+    srand(time(0));
+    uint32_t seed = rand() - n;
 
     while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
     {
@@ -94,32 +122,39 @@ int main(int argc, const char *argv[])
         read_from_line(parser, buffer);
 
         char *eptr;
-        unsigned int value = strtoul(parser->line[field_no], &eptr, 10);
+        // TODO(fssn): Handle different types of input
+        uint32_t value = strtoul(parser->line[field_no], &eptr, 10);
+        set_insert(unique, value);
+
         for (int i = 0; i < n; i++)
         {
-            srand(i);
-            unsigned int hash_value = murmurhash(&value, sizeof(unsigned int), rand());
-            Instance instance = {.val = value, .weight = hash_value};
+            uint32_t hash_value = murmurhash(&value, sizeof(uint32_t), seed + i);
+            Instance *instance = check_calloc(1, sizeof(Instance));
+            instance->val = value;
+            instance->weight = hash_value;
             sketches[i] = update(sketches[i], instance);
         }
     }
 
-    double *p = (double *)check_malloc(sizeof(double) * n);
+    uint64_t *p = (uint64_t *)check_malloc(sizeof(uint64_t) * n);
     for (int i = 0; i < n; i++)
     {
         p[i] = query(sketches[i]);
     }
 
-    double fst = kthSmallest(p, 0, n - 1, (n / 2) + 1);
-    double snd = fst;
+    uint64_t fst = kthSmallest(p, 0, n - 1, (n / 2) + 1);
+    uint64_t snd = fst;
 
     if (n % 2 == 0)
     {
         snd = kthSmallest(p, 0, n - 1, (n / 2));
     }
 
-    double median = (fst + snd) / 2.0;
-    printf("Estimative: %u\n", (unsigned int)median);
+    int64_t median = (fst + snd) / 2;
+    printf("%lu\n", median);
+    // printf("%u,", unique->count);
+    // double p_error = 100 * (median - unique->count) / (double)unique->count;
+    // printf("%.5f%%\n", p_error);
 
     for (int i = 0; i < n; i++)
     {
@@ -130,9 +165,9 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-int partition(double *arr, int l, int r);
+int partition(uint64_t *arr, int l, int r);
 
-double kthSmallest(double *arr, int l, int r, int k)
+uint64_t kthSmallest(uint64_t *arr, int l, int r, int k)
 {
     if (k > 0 && k <= r - l + 1)
     {
@@ -146,17 +181,17 @@ double kthSmallest(double *arr, int l, int r, int k)
         return kthSmallest(arr, pos + 1, r, k - pos + l - 1);
     }
 
-    return NAN;
+    return UINT64_MAX;
 }
 
-void swap(double *a, double *b)
+void swap(uint64_t *a, uint64_t *b)
 {
-    double temp = *a;
+    uint64_t temp = *a;
     *a = *b;
     *b = temp;
 }
 
-int partition(double *arr, int l, int r)
+int partition(uint64_t *arr, int l, int r)
 {
     int i = l;
     for (int j = l; j <= r - 1; j++)
@@ -171,12 +206,18 @@ int partition(double *arr, int l, int r)
     return i;
 }
 
+uint32_t paghash(uint32_t value, uint32_t r, uint32_t a)
+{
+    uint64_t limit = UINT64_MAX;
+    return (((uint64_t)a * (uint64_t)value) % limit) % r;
+}
+
 // MARK - KMV functions
-KMV *init(unsigned int size, unsigned int r)
+KMV *init(uint64_t size, uint32_t r)
 {
     KMV *sketch = check_malloc(sizeof(KMV));
     sketch->set = set_init(size);
-    sketch->r = (double)r;
+    sketch->r = r;
     sketch->k = size;
 
     sketch->heap = check_malloc(sizeof(Heap));
@@ -194,26 +235,26 @@ void free_sketch(KMV *sketch)
     check_free(sketch);
 }
 
-unsigned int murmurhash(unsigned int *key, unsigned int len, unsigned int seed)
+uint32_t murmurhash(uint32_t *key, uint32_t len, uint32_t seed)
 {
-    unsigned int c1 = 0xcc9e2d51;
-    unsigned int c2 = 0x1b873593;
-    unsigned int r1 = 15;
-    unsigned int r2 = 13;
-    unsigned int m = 5;
-    unsigned int n = 0xe6546b64;
-    unsigned int h = 0;
-    unsigned int k = 0;
+    uint32_t c1 = 0xcc9e2d51;
+    uint32_t c2 = 0x1b873593;
+    uint32_t r1 = 15;
+    uint32_t r2 = 13;
+    uint32_t m = 5;
+    uint32_t n = 0xe6546b64;
+    uint32_t h = 0;
+    uint32_t k = 0;
     unsigned char *d = (unsigned char *)key; // 32 bit extract from `key'
-    const unsigned int *chunks = NULL;
+    const uint32_t *chunks = NULL;
     const unsigned char *tail = NULL; // tail - last 8 bytes
     int i = 0;
     int l = len / 4; // chunk length
 
     h = seed;
 
-    chunks = (const unsigned int *)(d + l * 4); // body
-    tail = (const unsigned char *)(d + l * 4);  // last 8 byte chunk of `key'
+    chunks = (const uint32_t *)(d + l * 4);    // body
+    tail = (const unsigned char *)(d + l * 4); // last 8 byte chunk of `key'
 
     // for each 4 byte chunk of `key'
     for (i = -l; i != 0; ++i)
@@ -266,23 +307,26 @@ int is_present(KMV *sketch, Instance instance)
     return set_is_present(sketch->set, instance.val);
 }
 
-KMV *update(KMV *sketch, Instance x)
+KMV *update(KMV *sketch, Instance *x)
 {
-    if (!is_present(sketch, x))
+    if (!is_present(sketch, *x))
     {
-        insert_max_heap(sketch->heap, &x);
-        set_insert(sketch->set, x.val);
+        insert_max_heap(sketch->heap, x);
+        set_insert(sketch->set, x->val);
         if (sketch->heap->count > sketch->k)
         {
-            set_del(sketch->set, sketch->heap->instances[0].val);
-            pop_max(sketch->heap);
+            Instance *instance = pop_max(sketch->heap);
+            set_del(sketch->set, instance->val);
+            check_free(instance);
         }
     }
 
     return sketch;
 }
 
-double query(KMV *sketch)
+uint32_t query(KMV *sketch)
 {
-    return (sketch->k - 1) * (sketch->r / sketch->heap->instances[0].weight);
+    if (sketch->heap->count < sketch->k)
+        return sketch->heap->count;
+    return sketch->k * (sketch->r / ((double)sketch->heap->instances[0].weight));
 }
