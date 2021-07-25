@@ -3,6 +3,7 @@
     "files.associations": {
         "limits": "cpp",
         "*.tcc": "cpp",
-        "instance.h": "c"
+        "instance.h": "c",
+        "type_traits": "c"
     }
 }

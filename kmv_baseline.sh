@@ -1,6 +1,6 @@
 #!/bin/bash
 TARGET=(0 1 2 3 4 5 6 7 8)
-echo "id,target,epsilon,delta,tempo_inicio,tempo_fim,memoria,prediction" > kmv_baseline.csv
+echo "id,target,epsilon,delta,tempo_inicio,tempo_fim,prediction" > kmv_baseline.csv
 
 for t in "${TARGET[@]}";
 do

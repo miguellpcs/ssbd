@@ -1,27 +1,36 @@
+#include <stdint.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "../lib/array.h"
 #include "../lib/csv_parser.h"
+#include "../lib/hash.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
 #include "../lib/memory.h"
 #include "../lib/opt.h"
-
-int uniform_distribution(int, int);
+#include "../lib/set.h"
+#include "../lib/sorting.h"
 
 typedef struct
 {
-    Heap *high;
-    float tal;
-    int count;
-    int limit;
-    int len;
+    int *C;
+    uint32_t k;
+    uint32_t logk;
+    double alpha;
+    uint32_t seed;
 } HLL;
-HLL *init(int);
+HLL *init(uint32_t, uint32_t, uint32_t);
 void free_sketch(HLL *);
-HLL *update(HLL *, Instance);
-int query(HLL *);
+HLL *update(HLL *, char *);
+uint32_t query(HLL *);
+uint32_t leading_zeroes(uint32_t, uint32_t);
+
+uint64_t max(uint64_t lhs, uint64_t rhs)
+{
+    return lhs > rhs ? lhs : rhs;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -66,16 +75,35 @@ int main(int argc, const char *argv[])
     char *buffer = NULL;
     size_t buffer_size = 0;
 
-    getline(&buffer, &buffer_size, file);
+    ssize_t lines_read;
+    lines_read = getline(&buffer, &buffer_size, file);
 
     // Read keys from csv
     read_from_line(parser, buffer);
 
-    // Define K
-    int k = 0;
-    HLL *sketch = init(k);
+    // Define N
+    uint32_t n;
+    if (error_probability == 0)
+    {
+        n = 1;
+    }
+    else
+    {
+        n = ceil(log(1.0 / error_probability));
+    }
 
-    ssize_t lines_read;
+    uint32_t logk = ceil(log2(pow(1.04 / error_bound, 2.0)));
+    uint32_t k = ceil(pow(2.0, logk));
+
+    srand(time(0));
+    uint32_t seed = rand() - n;
+
+    HLL **sketches = (HLL **)check_malloc(sizeof(HLL *) * n);
+    for (int i = 0; i < n; i++)
+    {
+        sketches[i] = init(k, logk, seed + i);
+    }
+
     while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
     {
         // skip blank lines
@@ -84,71 +112,104 @@ int main(int argc, const char *argv[])
 
         read_from_line(parser, buffer);
 
-        Instance instance = {.val = atoi(parser->line[field_no]), .weight = 1};
-        sketch = update(sketch, instance);
+        char *value = parser->line[field_no];
+
+        for (int i = 0; i < n; i++)
+        {
+            sketches[i] = update(sketches[i], value);
+        }
     }
 
-    int count = query(sketch);
-    printf("Element count: %d\n", count);
+    uint64_t *p = (uint64_t *)check_malloc(sizeof(uint64_t) * n);
+    for (int i = 0; i < n; i++)
+    {
+        p[i] = query(sketches[i]);
+    }
 
-    csv_parser_free(&parser);
-    free_sketch(sketch);
-    check_free(buffer);
+    uint64_t fst = kthSmallest(p, 0, n - 1, (n / 2) + 1);
+    uint64_t snd = fst;
+
+    if (n % 2 == 0)
+    {
+        snd = kthSmallest(p, 0, n - 1, (n / 2));
+    }
+
+    int64_t median = (fst + snd) / 2;
+    printf("%lu\n", median);
+
     return 0;
 }
 
 // MARK - HLL functions
-HLL *init(int size)
+HLL *init(uint32_t k, uint32_t logk, uint32_t h)
 {
     HLL *sketch = check_malloc(sizeof(HLL));
-    sketch->count = 0;
-    sketch->len = 0;
-    sketch->tal = 0;
-    sketch->limit = size;
-
-    sketch->high = check_malloc(sizeof(Heap));
-    sketch->high->instances = check_malloc((size + 1) * sizeof(Instance));
-    sketch->high->count = 0;
+    sketch->C = check_calloc(k, sizeof(int));
+    sketch->seed = h;
+    sketch->k = k;
+    sketch->logk = logk;
+    sketch->alpha = 0.7213 / (1.0 + (1.079 / k));
 
     return sketch;
 }
 
 void free_sketch(HLL *sketch)
 {
-    check_free(sketch->high->instances);
-    check_free(sketch->high);
+    check_free(sketch->C);
     check_free(sketch);
 }
 
-HLL *update(HLL *sketch, Instance x)
-{ // Update fors simple RS. TODO: add tal update
-    if (sketch->len < sketch->limit)
-    {
-        insert_min_heap(sketch->high, &x);
-        sketch->count += 1;
-        sketch->len += 1;
-    }
+HLL *update(HLL *sketch, char *value)
+{
+    size_t value_len = strlen(value);
+    uint32_t h_x = murmurhash(value, value_len, sketch->seed);
+    uint32_t j = h_x % sketch->k;
+    uint32_t g_x = h_x >> sketch->logk;
 
-    else
-    {
-        sketch->count += 1;
-        int i = uniform_distribution(0, sketch->count);
-        if (i < sketch->limit)
-        {
-            pop_min(sketch->high);
-            insert_min_heap(sketch->high, &x);
-        }
-    }
+    sketch->C[j] = max(sketch->C[j], leading_zeroes(g_x, 64 - sketch->logk));
 
     return sketch;
 }
 
-int query(HLL *sketch)
+uint32_t query(HLL *sketch)
 {
-    for (int i = 0; i < sketch->len; i++)
+    double x = 0;
+    for (int j = 0; j < sketch->k; j++)
     {
-        printf("val = %d, weight = %d \n ", sketch->high->instances[i].val, sketch->high->instances[i].weight);
+        x += (1.0 / (1 << sketch->C[j]));
     }
-    printf("\n");
-    return sketch->count;
+
+    uint32_t first_estimate = ceil((sketch->alpha * sketch->k * sketch->k) / x);
+    uint32_t estimate = first_estimate;
+
+    if (first_estimate < ((5.0 / 2.0) * sketch->k))
+    {
+        int V = 0;
+        for (int j = 0; j < sketch->k; j++)
+        {
+            if (sketch->C[j] == 0)
+                V++;
+        }
+        if (V != 0)
+        {
+            estimate = sketch->k * log(sketch->k / (double)V);
+        }
+    }
+    else if (first_estimate > ((1.0 / 3.0) * ((int64_t)1 << 32)))
+    {
+        estimate = -((int64_t)1 << 32) * log(1 - (double)first_estimate / ((int64_t)1 << 32));
+    }
+    return estimate;
+}
+
+uint32_t leading_zeroes(uint32_t value, uint32_t nbits)
+{
+    int res = 0;
+    while (!(value & (1 << (nbits - 1))))
+    {
+        value = (value << 1);
+        res++;
+    }
+
+    return res + 1;
 }

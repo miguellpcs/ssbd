@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "id,target,epsilon,delta,tempo_inicio,tempo_fim,memoria,prediction" > kmv_trace.csv
+echo "id,target,epsilon,delta,tempo_inicio,tempo_fim,prediction" > kmv_trace.csv
 
 while IFS=, read -r id t e d0;
 do

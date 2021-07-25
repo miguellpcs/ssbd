@@ -1,4 +1,4 @@
-id,target,epsilon,delta,tempo_inicio,tempo_fim,memoria,prediction
+id,target,epsilon,delta,tempo_inicio,tempo_fim,prediction
 2,8,0.1,0.1,Sun Jul 25 14:12:58 -03 2021,Sun Jul 25 14:13:00 -03 2021,78
 17,0,0.1,0.1,Sun Jul 25 14:13:01 -03 2021,Sun Jul 25 14:13:08 -03 2021,1398377
 1,7,0.3,0.05,Sun Jul 25 14:13:09 -03 2021,Sun Jul 25 14:13:15 -03 2021,237881
