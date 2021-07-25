@@ -25,7 +25,7 @@ HLL *init(uint32_t, uint32_t, uint32_t);
 void free_sketch(HLL *);
 HLL *update(HLL *, char *);
 uint32_t query(HLL *);
-uint32_t leading_zeroes(uint32_t, uint32_t);
+int64_t leading_zeroes(int64_t, int64_t);
 
 uint64_t max(uint64_t lhs, uint64_t rhs)
 {
@@ -202,13 +202,17 @@ uint32_t query(HLL *sketch)
     return estimate;
 }
 
-uint32_t leading_zeroes(uint32_t value, uint32_t nbits)
+int64_t leading_zeroes(int64_t value, int64_t nbits)
 {
-    int res = 0;
-    while (!(value & (1 << (nbits - 1))))
+    int64_t res = 0;
+    uint64_t mask = (uint64_t)1 << (nbits - 1);
+    while ((mask & value) == 0)
     {
         value = (value << 1);
         res++;
+
+        if (value == 0)
+            break;
     }
 
     return res + 1;
