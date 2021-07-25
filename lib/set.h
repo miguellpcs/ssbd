@@ -1,17 +1,20 @@
 #ifndef set_h
 #define set_h
 
+#include "hash.h"
 #include "memory.h"
 #include "sentinel.h"
+
+#include <stdint.h>
 
 typedef struct
 {
     Sentinel **list;
-    unsigned int size;
-    unsigned int count;
+    uint32_t size;
+    uint32_t count;
 } Set;
 
-Set *set_init(unsigned int size)
+Set *set_init(uint32_t size)
 {
     Set *tmp = (Set *)check_malloc(sizeof(Set));
     tmp->size = size;
@@ -25,33 +28,25 @@ Set *set_init(unsigned int size)
     return tmp;
 }
 
-unsigned int hash(unsigned int x)
+int set_is_present(Set *set, const char *value)
 {
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = ((x >> 16) ^ x) * 0x45d9f3b;
-    x = (x >> 16) ^ x;
-    return x;
-}
-
-int set_is_present(Set *set, unsigned int value)
-{
-    unsigned int h = hash(value) % set->size;
+    uint32_t h = murmurhash(value, strlen(value), 0) % set->size;
     return sentinel_search(set->list[h], value) != NULL;
 }
 
-void set_insert(Set *set, unsigned int value)
+void set_insert(Set *set, const char *value)
 {
     if (!set_is_present(set, value))
     {
-        unsigned int h = hash(value) % set->size;
+        uint32_t h = murmurhash(value, strlen(value), 0) % set->size;
         sentinel_push(set->list[h], new_node(value));
         set->count++;
     }
 }
 
-void set_del(Set *set, unsigned int value)
+void set_del(Set *set, const char *value)
 {
-    unsigned int h = hash(value) % set->size;
+    uint32_t h = murmurhash(value, strlen(value), 0) % set->size;
     Node *node = sentinel_search(set->list[h], value);
     if (node != NULL)
     {

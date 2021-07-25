@@ -90,7 +90,7 @@ int main(int argc, const char *argv[])
 
         read_from_line(parser, buffer);
 
-        Instance instance = {.val = atoi(parser->line[id_field_no]), .weight = atoi(parser->line[weight_field_no])};
+        Instance instance = {.val = parser->line[id_field_no], .weight = atoi(parser->line[weight_field_no])};
         sketch = update(sketch, &instance);
     }
 
@@ -204,7 +204,7 @@ int query(WS *sketch)
 {
     for (int i = 0; i < sketch->len; i++)
     {
-        printf("val = %d, weight = %d \n ", sketch->high->instances[i].val, sketch->high->instances[i].weight);
+        printf("val = %d, weight = %d \n ", *((int *)sketch->high->instances[i].val), sketch->high->instances[i].weight);
     }
     printf("\n");
     return sketch->count;

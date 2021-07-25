@@ -2,12 +2,13 @@
 #define sentinel_h
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "memory.h"
 
 typedef struct Node
 {
-    unsigned int element;
+    char *element;
     struct Node *next;
     struct Node *before;
 } Node;
@@ -21,13 +22,14 @@ typedef struct Sentinel
 
 unsigned int get_length(Sentinel *);
 Sentinel *sentinel_init(void);
-Node *new_node(unsigned int);
+Node *new_node(const char *);
 void sentinel_destroy(Sentinel *);
 
-Node *sentinel_search(Sentinel *, unsigned int);
+Node *sentinel_search(Sentinel *, const char *);
 
 void sentinel_push(Sentinel *, Node *);
-unsigned int sentinel_pop(Sentinel *);
+const char *sentinel_pop(Sentinel *);
+const char *sentinel_delete(Sentinel *, Node *);
 
 #define SENTINEL_FOREACH(L, S, M, V) \
     Node *_node = NULL;              \
@@ -44,10 +46,10 @@ Sentinel *sentinel_init(void)
     return check_calloc(1, sizeof(Sentinel));
 }
 
-Node *new_node(unsigned int value)
+Node *new_node(const char *value)
 {
     Node *tmp = (Node *)check_calloc(1, sizeof(Node));
-    tmp->element = value;
+    tmp->element = strdup(value);
     return tmp;
 }
 
@@ -56,18 +58,21 @@ void sentinel_destroy(Sentinel *self)
     SENTINEL_FOREACH(self, head, next, cur)
     {
         if (cur->before)
+        {
+            check_free(cur->element);
             check_free(cur->before);
+        }
     }
 
     check_free(self->tail);
     check_free(self);
 }
 
-Node *sentinel_search(Sentinel *self, unsigned int value)
+Node *sentinel_search(Sentinel *self, const char *value)
 {
     SENTINEL_FOREACH(self, head, next, cur)
     {
-        if (cur->element == value)
+        if (strcmp(cur->element, value) == 0)
         {
             return cur;
         }
@@ -92,7 +97,7 @@ void sentinel_push(Sentinel *self, Node *tmp)
     self->length++;
 }
 
-unsigned int sentinel_delete(Sentinel *self, Node *node)
+const char *sentinel_delete(Sentinel *self, Node *node)
 {
     if (node == self->head && node == self->tail)
     {
@@ -118,13 +123,13 @@ unsigned int sentinel_delete(Sentinel *self, Node *node)
     }
 
     self->length--;
-    unsigned int value = node->element;
+    const char *value = node->element;
     check_free(node);
 
     return value;
 }
 
-unsigned int sentinel_pop(Sentinel *self)
+const char *sentinel_pop(Sentinel *self)
 {
     Node *node = self->tail;
     return node != NULL ? sentinel_delete(self, node) : 0;
