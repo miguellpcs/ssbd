@@ -25,13 +25,32 @@ void free_sketch(KMV *);
 KMV *update(KMV *, Instance *);
 uint32_t query(KMV *);
 
+void print_help();
+void print_error_help()
+{
+    printf("Algo de inesperado aconteceu ao programa, olhe o --help por precaucao.\n\n");
+    print_help();
+}
+
+void print_help()
+{
+    printf("$ kmv [options] inputfile.csv\n\n");
+    printf("--target field_no:\n");
+    printf("Especifica o numero da coluna alvo (t≥0) do arquivo \nde entrada cuja quantidade de valores ́unicos devem estimada.\n\n");
+    printf("--eps error_bound:\n");
+    printf("Especifica o valor do parametro e do estimador \n(limite do erro relativo desejado).\n\n");
+    printf("--delta error_probability:\n");
+    printf("Especifica o valor do parametro δ do estimador \n(limite para a probabilidade que o erro relativo da \nestimacao seja superior ao limite especificado).\n\n");
+    printf("--help : Roda este comando.\n\n");
+}
+
 int main(int argc, const char *argv[])
 {
     opt_t *opt;
     const char *opt_key = NULL;
     char **opt_args = NULL;
 
-    int status = opt_init(&opt, "target:eps:delta:", argc, argv);
+    int status = opt_init(&opt, "target:eps:delta:help:", argc, argv);
     if (status != OPT_SUCCESS)
     {
     }
@@ -53,16 +72,26 @@ int main(int argc, const char *argv[])
         {
             error_probability = atof(opt_args[0]);
         }
+        else if (strcmp(opt_key, "help") == 0)
+        {
+            print_help();
+            return 0;
+        }
     }
     opt_free(&opt);
 
     const char *filename = strdup(argv[argc - 1]);
     FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        print_error_help();
+    }
 
     csv_parser_t *parser = NULL;
     status = csv_parser_init(&parser);
     if (status != PARSER_SUCCESS)
     {
+        print_error_help();
     }
 
     char *buffer = NULL;

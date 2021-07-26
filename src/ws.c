@@ -25,13 +25,33 @@ void free_sketch(WS *);
 WS *update(WS *, Instance *);
 uint64_t query(WS *, char *);
 
+void print_help();
+void print_error_help()
+{
+    printf("Algo de inesperado aconteceu ao programa, olhe o --help por precaucao.\n\n");
+    print_help();
+}
+
+void print_help()
+{
+    printf("$ ws [options] inputfile.csv\n\n");
+    printf("--id id_field_no:\n");
+    printf("Especifica o numero (t≥0) da coluna a ser usado como identificador do arquivo \nde entrada. Esta coluna não pode ter valores repetidos.\n\n");
+    printf("--weight weight_field_no:\n");
+    printf("Especifica a coluna da entrada que deve ser usada como peso. \n Esta coluna deve conter inteiros positivos.\n\n");
+    printf("--size sample_size:\n");
+    printf("Especifica o tamanho da amostra do Sketch\n\n");
+    printf("--filter field_no field_value:\n");
+    printf("Especifica que deve ser estimado o peso do subconjunto dos registros cujo valor\n do campo de numero field_no seja igual a field_value\n\n");
+    printf("--help : Roda este comando.\n\n");
+}
 int main(int argc, const char *argv[])
 {
     opt_t *opt;
     const char *opt_key = NULL;
     char **opt_args = NULL;
 
-    int status = opt_init(&opt, "id:weight:size:filter:", argc, argv);
+    int status = opt_init(&opt, "id:weight:size:filter:help:", argc, argv);
     if (status != OPT_SUCCESS)
     {
     }
@@ -60,16 +80,26 @@ int main(int argc, const char *argv[])
             field_no = atoi(opt_args[0]);
             field_value = strdup(opt_args[1]);
         }
+        else if (strcmp(opt_key, "help") == 0)
+        {
+            print_help();
+            return 0;
+        }
     }
     opt_free(&opt);
 
     const char *filename = argv[argc - 1];
     FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        print_error_help();
+    }
 
     csv_parser_t *parser = NULL;
     status = csv_parser_init(&parser);
     if (status != PARSER_SUCCESS)
     {
+        print_error_help();
     }
 
     char *buffer = NULL;

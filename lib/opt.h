@@ -97,6 +97,11 @@ int get_opt(opt_t *opt, const char **opt_key, char ***opt_args)
         return OPT_BADKEY;
     }
 
+    if (strcmp(*opt_key, "help") == 0)
+    {
+        return OPT_SUCCESS;
+    }
+
     int tmp = opt->current_arg;
     // Check how many args until next key or end of args
     // Needed because we don't know ahead of time how many more args left before the next -- or end of args
