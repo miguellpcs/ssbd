@@ -7,5 +7,6 @@ typedef struct instance
 {
     void *val;
     uint32_t weight;
+    void *extra;
 } Instance;
 #endif

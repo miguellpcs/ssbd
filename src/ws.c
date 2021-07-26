@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "../lib/array.h"
@@ -12,17 +13,17 @@ int uniform_distribution(int, int);
 
 typedef struct ws
 {
-    Heap *high;
-    Heap *C;
+    Heap *L;
+    Heap *T;
     float tal;
-    int count;
-    int limit;
-    int len;
+    uint32_t count;
+    uint32_t size;
+    uint32_t len;
 } WS;
 WS *init(int);
 void free_sketch(WS *);
 WS *update(WS *, Instance *);
-int query(WS *);
+uint64_t query(WS *, char *);
 
 int main(int argc, const char *argv[])
 {
@@ -90,13 +91,16 @@ int main(int argc, const char *argv[])
 
         read_from_line(parser, buffer);
 
-        Instance instance = {.val = parser->line[id_field_no], .weight = atoi(parser->line[weight_field_no])};
-        sketch = update(sketch, &instance);
+        Instance *instance = check_calloc(1, sizeof(Instance));
+        instance->val = strdup(parser->line[id_field_no]);
+        instance->weight = atoi(parser->line[weight_field_no]);
+        instance->extra = strdup(parser->line[field_no]);
+
+        sketch = update(sketch, instance);
     }
 
-    int count = query(sketch);
-    printf("%d: %s\n", field_no, field_value);
-    printf("Element count: %d\n", count);
+    uint64_t total_weight = query(sketch, field_value);
+    printf("%lu\n", total_weight);
 
     check_free(field_value);
     csv_parser_free(&parser);
@@ -112,100 +116,98 @@ WS *init(int size)
     sketch->count = 0;
     sketch->len = 0;
     sketch->tal = 0;
-    sketch->limit = size;
+    sketch->size = size;
 
-    sketch->high = check_malloc(sizeof(Heap));
-    sketch->high->instances = check_malloc((size + 1) * sizeof(Instance));
-    sketch->high->count = 0;
+    sketch->L = check_malloc(sizeof(Heap));
+    sketch->L->instances = check_malloc((size + 1) * sizeof(Instance));
+    sketch->L->count = 0;
 
-    sketch->C = check_malloc(sizeof(Heap));
-    sketch->C->instances = NULL;
-    sketch->C->count = 0;
+    sketch->T = check_malloc(sizeof(Heap));
+    sketch->T->instances = NULL;
+    sketch->T->count = 0;
 
     return sketch;
 }
 
 void free_sketch(WS *sketch)
 {
-    check_free(sketch->high->instances);
-    check_free(sketch->high);
-    check_free(sketch->C->instances);
-    check_free(sketch->C);
+    check_free(sketch->L->instances);
+    check_free(sketch->L);
+    check_free(sketch->T->instances);
+    check_free(sketch->T);
     check_free(sketch);
 }
 
-WS *update(WS *sketch, Instance *x)
+WS *update(WS *sketch, Instance *y)
 {
-    if (sketch->len < sketch->limit)
-    { // Menos elem na amostra que o tamanho limite da amostra. Apenas insere sem nenhuma restrição
-        insert_min_heap(sketch->high, x);
-        sketch->count += 1;
-        sketch->len += 1;
-        return sketch;
-    }
-
-    int wL = sketch->tal * sketch->C->count; // Estima a massa dos pesos do conjunto de elementos leves
-
-    Heap *new = malloc(sizeof(Heap)); // Cria uma heap auxiliar para termos um novo conjunto com s+1 elementos
-    new->instances = (Instance *)check_malloc(sizeof(Instance));
-    new->count = 0;
-
-    if (x->weight < sketch->tal)
+    Heap *X = check_malloc(sizeof(Heap));
+    X->count = 0;
+    X->instances = check_malloc(sizeof(Instance) * (sketch->L->count + 1));
+    unsigned int wy = y->weight;
+    unsigned int W = sketch->tal * sketch->T->count;
+    if (wy > sketch->tal)
     {
-        insert_min_heap(new, x);
-        wL += x->weight;
+        insert_min_heap(sketch->L, y);
+        sketch->count++;
     }
     else
     {
-        insert_min_heap(sketch->high, x);
+        insert_min_heap(X, y);
+        W += wy;
     }
-    while (sketch->high->count != 0 && wL >= (sketch->limit - sketch->high->count) * sketch->high->instances[0].weight)
-    {
-        wL += sketch->high->instances[0].weight;
-        new->instances = (Instance *)check_realloc(new->instances, sizeof(Instance) * (new->count + 1));
-        insert_min_heap(new, &sketch->high->instances[0]);
-        pop_min(sketch->high);
-    }
-    sketch->tal = ((float)wL) / ((sketch->limit) - (sketch->high->count));
-    float sum_prob = heap_sum_prob(new, sketch->tal) + heap_sum_prob(sketch->C, sketch->tal);
-    float p = uniform_distribution_real(0, sum_prob);
 
+    while (sketch->L->count != 0 && W >= (sketch->size - sketch->L->count) * sketch->L->instances[0].weight)
+    {
+        Instance h = sketch->L->instances[0];
+        W += h.weight;
+        pop_min(sketch->L);
+        insert_min_heap(X, &h);
+        X->count++;
+    }
+
+    sketch->tal = W / (sketch->size - sketch->L->count);
+    float r = uniform_distribution_real(0, 1);
     int i = 0;
-    for (; i < new->count &&p > 0; i++)
+    while (i < X->count && r >= 0)
     {
-        p = p - (1 - new->instances[i].weight / sketch->tal);
+        r -= (1 - X->instances[i].weight / sketch->tal);
+        i++;
     }
 
-    if (p < 0)
+    if (r < 0)
     {
-        remove_at_min(new, i - 1);
+        remove_at_min(X, i - 1);
     }
     else
     {
-        remove_at_min(sketch->C, uniform_distribution(0, sketch->C->count - 1));
+        int random = uniform_distribution(0, sketch->T->count - 1);
+        remove_at_min(sketch->T, random);
     }
 
-    int new_size = sketch->C->count + new->count;
+    int64_t new_size = sketch->T->count + X->count;
     if (new_size > 0)
     {
-        sketch->C->instances = (Instance *)check_realloc(sketch->C->instances, sizeof(Instance) * new_size);
-        for (i = 0; i < new->count; i++)
+        sketch->T->instances = (Instance *)check_realloc(sketch->T->instances, sizeof(Instance) * new_size);
+        for (i = 0; i < X->count; i++)
         {
-            insert_min_heap(sketch->C, &new->instances[i]);
+            insert_min_heap(sketch->T, &X->instances[i]);
         }
     }
-    free(new->instances);
-    free(new);
+    check_free(X);
+    X = NULL;
 
     return sketch;
 }
 
-int query(WS *sketch)
+uint64_t query(WS *sketch, char *filter)
 {
-    for (int i = 0; i < sketch->len; i++)
+    uint64_t sum = 0;
+    for (int i = 0; i < sketch->L->count; i++)
     {
-        printf("val = %d, weight = %d \n ", *((int *)sketch->high->instances[i].val), sketch->high->instances[i].weight);
+        if (strcmp((char *)sketch->L->instances[i].extra, filter) == 0)
+        {
+            sum += sketch->L->instances[i].weight;
+        }
     }
-    printf("\n");
-    return sketch->count;
+    return sum;
 }

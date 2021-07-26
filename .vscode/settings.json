@@ -4,6 +4,12 @@
         "limits": "cpp",
         "*.tcc": "cpp",
         "instance.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "cmath": "c",
+        "cstdarg": "c",
+        "cstdio": "c",
+        "cstdlib": "c",
+        "cstdint": "c",
+        "typeinfo": "c"
     }
 }

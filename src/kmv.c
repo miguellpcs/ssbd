@@ -119,6 +119,7 @@ int main(int argc, const char *argv[])
             Instance *instance = check_calloc(1, sizeof(Instance));
             instance->val = strdup(value);
             instance->weight = hash_value;
+            instance->extra = NULL;
             sketches[i] = update(sketches[i], instance);
         }
     }
