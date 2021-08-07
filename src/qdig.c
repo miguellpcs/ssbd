@@ -3,26 +3,38 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../lib/array.h"
 #include "../lib/csv_parser.h"
 #include "../lib/hash.h"
 #include "../lib/instance.h"
 #include "../lib/heap.h"
 #include "../lib/memory.h"
 #include "../lib/opt.h"
-#include "../lib/set.h"
-#include "../lib/sorting.h"
+
+typedef enum
+{
+    AFTER_EVERY_UPDATE,
+    WHEN_WEIGHT_DOUBLES,
+    AFTER_CAPACITY_INCREASES
+} compress_strategy_e;
 
 typedef struct
 {
-    int32_t *values;
+    size_t size;
+    double error_bound;
+    // TODO(fssn): replace with binary tree root
+    Instance *values;
+    compress_strategy_e compress_strategy;
+    uint64_t saved_weight;
 } QDigest;
-QDigest *init();
+QDigest *init(size_t, double, compress_strategy_e);
 void free_sketch(QDigest *);
 
-QDigest *update(QDigest *, int32_t);
+void update(QDigest *, Instance);
 uint32_t rank(QDigest *);
-int32_t quantile(QDigest *, double);
+Instance quantile(QDigest *, double);
+uint64_t weight(QDigest *);
+uint64_t capacity(QDigest *);
+void compress(QDigest *);
 
 void print_help();
 void print_error_help()
@@ -117,7 +129,12 @@ int main(int argc, const char *argv[])
     // Read keys from csv
     read_from_line(parser, buffer);
 
-    QDigest *sketch = init();
+    size_t size = (1 / error_bound) * log(universe_size);
+
+    // TODO(fssn): Add compress_strategy as cmd line opt so we can change during experiment
+    QDigest *sketch = init(size, error_bound, AFTER_CAPACITY_INCREASES);
+
+    int counter = 0;
     while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
     {
         // skip blank lines
@@ -126,18 +143,30 @@ int main(int argc, const char *argv[])
 
         read_from_line(parser, buffer);
 
-        int32_t value = atoi(parser->line[id_field_no]);
-        update(sketch, value);
+        int32_t weight = atoi(parser->line[id_field_no]);
+        // Skip zero weighted elements
+        if (weight <= 0)
+            continue;
+
+        counter++;
+        counter = counter > universe_size ? universe_size : counter;
+
+        Instance instance = {.val = counter, .weight = weight};
+        update(sketch, instance);
     }
 
     return 0;
 }
 
 // MARK - QDigest functions
-QDigest *init()
+QDigest *init(size_t size, double error_bound, compress_strategy_e compress_strategy)
 {
     QDigest *sketch = check_calloc(1, sizeof(QDigest));
-    sketch->values = check_calloc(1, sizeof(int32_t));
+    sketch->size = size;
+    sketch->error_bound = error_bound;
+    sketch->compress_strategy = compress_strategy;
+    sketch->saved_weight = 0;
+    sketch->values = check_calloc(size, sizeof(Instance));
     return sketch;
 }
 
@@ -147,9 +176,30 @@ void free_sketch(QDigest *sketch)
     check_free(sketch);
 }
 
-QDigest *update(QDigest *sketch, int32_t value)
+void update(QDigest *sketch, Instance value)
 {
-    return sketch;
+    uint64_t previous_weight = sketch->saved_weight;
+    uint64_t previous_capacity = capacity(sketch);
+
+    // do update
+
+    // Check compress strategy
+    if (previous_capacity < capacity(sketch) && sketch->compress_strategy == AFTER_CAPACITY_INCREASES)
+    {
+        compress(sketch);
+    }
+
+    if (previous_weight > weight(sketch) / 2.0)
+    {
+        if (sketch->compress_strategy == WHEN_WEIGHT_DOUBLES)
+        {
+            compress(sketch);
+        }
+        sketch->saved_weight = previous_weight;
+    }
+
+    if (sketch->compress_strategy == AFTER_EVERY_UPDATE)
+        compress(sketch);
 }
 
 uint32_t rank(QDigest *sketch)
@@ -157,7 +207,28 @@ uint32_t rank(QDigest *sketch)
     return 0;
 }
 
-int32_t quantile(QDigest *sketch, double q)
+Instance quantile(QDigest *sketch, double q)
 {
-    return 0;
+    Instance x = {.val = 0, .weight = 0};
+    return x;
+}
+
+uint64_t weight(QDigest *sketch)
+{
+    // TODO(fssn): binary_tree.fold(|acc, x| acc + x);
+    uint64_t sum = 0;
+    for (int i = 0; i < sketch->size; i++)
+    {
+        sum += sketch->values[i].weight;
+    }
+    return sum;
+}
+
+uint64_t capacity(QDigest *sketch)
+{
+    return sketch->error_bound * weight(sketch) / (log(sketch->size));
+}
+
+void compress(QDigest *sketch)
+{
 }

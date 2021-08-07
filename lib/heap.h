@@ -43,7 +43,7 @@ int64_t cmp_heap_max(uint32_t a, uint32_t b)
 // MARK: - Heap functions
 void insert_heap(Heap *heap, Instance *instance, compare_weight cmp)
 {
-    Instance new_instance = {.val = instance->val, .weight = instance->weight, .extra = instance->extra};
+    Instance new_instance = {.val = instance->val, .weight = instance->weight};
     heap->instances[heap->count] = new_instance;
     heapify_bottom_top(heap, heap->count, cmp);
     heap->count++;

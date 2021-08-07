@@ -9,7 +9,7 @@ build:
 all: clean build qdig gk kll
 
 qdig: 
-	-$(CC) $(CFLAGS) src/qdig.c -o bin/qdig
+	-$(CC) $(CFLAGS) src/qdig.c -lm -o bin/qdig
 gk: 
 	-$(CC) $(CFLAGS) src/gk.c -lm -o bin/gk
 kll: 
