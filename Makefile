@@ -6,14 +6,14 @@ OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
 build:
 	@mkdir -p bin
 
-all: clean build ws kmv hll 
+all: clean build qdig gk kll
 
-ws: 
-	-$(CC) $(CFLAGS) src/ws.c -o bin/ws
-kmv: 
-	-$(CC) $(CFLAGS) src/kmv.c -lm -o bin/kmv
-hll: 
-	-$(CC) $(CFLAGS) src/hll.c -lm -o bin/hll
+qdig: 
+	-$(CC) $(CFLAGS) src/qdig.c -o bin/qdig
+gk: 
+	-$(CC) $(CFLAGS) src/gk.c -lm -o bin/gk
+kll: 
+	-$(CC) $(CFLAGS) src/kll.c -lm -o bin/kll
 
 clean:
 	rm -f bin/*
