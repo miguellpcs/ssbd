@@ -2,46 +2,12 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
-#include <algorithm>
 #include <functional>
 
 #include "../lib/csv_parser.h"
 #include "../lib/memory.h"
 #include "../lib/opt.h"
-
-// MARK: - Timer
-#include <chrono>
-
-class Timer
-{
-public:
-    Timer(std::string name) : m_Name(name)
-    {
-        m_StartTimepoint = std::chrono::high_resolution_clock::now();
-    }
-
-    ~Timer()
-    {
-        Stop();
-    }
-
-    void Stop()
-    {
-        auto endTimepoint = std::chrono::high_resolution_clock::now();
-
-        auto start = std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
-        auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
-
-        auto duration = end - start;
-        double ms = duration * 0.001;
-
-        printf("Timer %s => %ldus (%lfms)\n", m_Name.c_str(), duration, ms);
-    }
-
-private:
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTimepoint;
-    std::string m_Name;
-};
+#include "../lib/timer.hpp"
 
 struct GKNode
 {
@@ -203,6 +169,7 @@ typedef enum
     RANK,
     QUERY
 } operation_e;
+void read_query_args_from_file(FILE *in, operation_e operation, uint64_t **fields, double **fields_double, size_t *fields_count);
 
 int main(int argc, const char *argv[])
 {
@@ -313,7 +280,6 @@ int main(int argc, const char *argv[])
     // Read keys from csv
     read_from_line(parser, buffer);
 
-    std::vector<int64_t> true_values;
     GK sketch{error_bound};
     {
         Timer timer{"Input + Updates"};
@@ -330,7 +296,6 @@ int main(int argc, const char *argv[])
                 continue;
 
             sketch.update(value);
-            true_values.push_back(value);
 
             if (verbose)
                 sketch.print();
@@ -338,36 +303,8 @@ int main(int argc, const char *argv[])
     }
 
     if (in)
-    {
-        size_t current_size = 0;
-        size_t capacity = 64;
-        fields_count = 0;
-        if (operation == RANK)
-            fields = (uint64_t *)check_malloc(sizeof(uint64_t) * capacity);
-        else
-            fields_double = (double *)check_malloc(sizeof(double) * capacity);
-        while ((lines_read = getline(&buffer, &buffer_size, in)) != -1)
-        {
-            if (current_size == capacity)
-            {
-                capacity *= 2;
-                if (operation == RANK)
-                    fields = (uint64_t *)check_realloc(fields, capacity);
-                else
-                    fields_double = (double *)check_realloc(fields_double, capacity);
-            }
+        read_query_args_from_file(in, operation, &fields, &fields_double, &fields_count);
 
-            if (operation == RANK)
-                fields[current_size] = atoi(buffer);
-            else
-                fields_double[current_size] = atof(buffer);
-
-            current_size++;
-        }
-        fields_count = current_size;
-    }
-
-    std::sort(true_values.begin(), true_values.end());
     {
         Timer timer{"Query Operations"};
         for (int i = 0; i < fields_count; i++)
@@ -381,12 +318,44 @@ int main(int argc, const char *argv[])
                 auto x = sketch.query(fields_double[i]).x;
                 printf("rank(%lu) = %.2lf\n", x, sketch.rank(x));
                 printf("quantile(%.2lf) = %lu\n", fields_double[i], x);
-                size_t idx = ceil(fields_double[i] * (true_values.size() - 1));
-                printf("true value = %lu\n", true_values[idx]);
-                printf("rank(%lu) = %.2lf\n\n", true_values[idx], sketch.rank(true_values[idx]));
             }
         }
     }
 
     return 0;
+}
+
+void read_query_args_from_file(FILE *in, operation_e operation, uint64_t **fields, double **fields_double, size_t *fields_count)
+{
+    size_t current_size = 0;
+    size_t capacity = 64;
+    char *buffer = NULL;
+    size_t buffer_size = 0;
+    ssize_t lines_read = 0;
+
+    *fields_count = 0;
+
+    if (operation == RANK)
+        *fields = (uint64_t *)check_malloc(sizeof(uint64_t) * capacity);
+    else
+        *fields_double = (double *)check_malloc(sizeof(double) * capacity);
+    while ((lines_read = getline(&buffer, &buffer_size, in)) != -1)
+    {
+        if (current_size == capacity)
+        {
+            capacity *= 2;
+            if (operation == RANK)
+                *fields = (uint64_t *)check_realloc(fields, capacity);
+            else
+                *fields_double = (double *)check_realloc(fields_double, capacity);
+        }
+
+        if (operation == RANK)
+            (*fields)[current_size] = atoi(buffer);
+        else
+            (*fields_double)[current_size] = atof(buffer);
+
+        current_size++;
+    }
+    *fields_count = current_size;
 }
