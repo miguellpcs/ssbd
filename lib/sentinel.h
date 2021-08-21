@@ -43,7 +43,7 @@ unsigned int get_length(Sentinel *self)
 
 Sentinel *sentinel_init(void)
 {
-    return check_calloc(1, sizeof(Sentinel));
+    return (Sentinel *)check_calloc(1, sizeof(Sentinel));
 }
 
 Node *new_node(const char *value)

@@ -37,7 +37,6 @@ Array *create_sample(int size)
     Instance *data = (Instance *)check_malloc(size * sizeof(Instance));
     for (int i = 0; i < size; i++)
     {
-        data[i].val = check_malloc(sizeof(int));
         data[i].val = i;
         data[i].weight = size - i + (uniform_distribution(0, 100));
     }

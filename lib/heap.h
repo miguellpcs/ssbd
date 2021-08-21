@@ -136,7 +136,7 @@ Instance *pop(Heap *heap, compare_weight cmp)
         return NULL;
     }
 
-    Instance *pop = check_calloc(1, sizeof(Instance));
+    Instance *pop = (Instance *)check_calloc(1, sizeof(Instance));
     pop->val = heap->instances[0].val;
     pop->weight = heap->instances[0].weight;
     heap->instances[0] = heap->instances[heap->count - 1];

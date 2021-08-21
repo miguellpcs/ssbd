@@ -20,21 +20,19 @@
             ]
         },
         {
-            "name": "(gdb) Launch WS",
+            "name": "(gdb) Launch GK",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/ws",
+            "program": "${workspaceFolder}/bin/gk",
             "args": [
-                "--id",
-                "0",
-                "--weight",
-                "6",
-                "--filter",
-                "8",
-                "GOOGLE",
-                "--size",
-                "1024",
-                "../data/network_flows_unique.csv"
+                "--val",
+                "7",
+                "--eps",
+                "0.1",
+                "../data/network_flows.csv",
+                "--quant",
+                "--in",
+                "../data/gk_test.in"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

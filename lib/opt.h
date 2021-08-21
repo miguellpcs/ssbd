@@ -111,8 +111,6 @@ int get_opt(opt_t *opt, const char **opt_key, char ***opt_args)
     }
 
     int number_of_args = tmp - opt->current_arg;
-    if (number_of_args == 0)
-        return OPT_EOF;
 
     for (int i = 0; i < opt->current_args_count; i++)
     {
