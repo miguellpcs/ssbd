@@ -28,11 +28,14 @@
                 "--val",
                 "7",
                 "--eps",
-                "0.1",
+                "0.02",
+                "--univ",
+                "1523000",
                 "../data/network_flows.csv",
                 "--quant",
                 "--in",
-                "../data/gk_test.in"
+                "../data/gk_test.in",
+                "--verbose"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -60,11 +63,11 @@
                 "--univ",
                 "10",
                 "../data/gk_test.csv",
-                "--quant",
-                "--in",
-                "../data/gk_test.in",
+                "--rank",
+                "5",
                 "--strategy",
-                "update"
+                "capacity",
+                "--verbose"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

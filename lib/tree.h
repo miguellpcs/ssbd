@@ -25,13 +25,6 @@ Node *create_tree(int N)
     Node *tmp = (Node *)check_malloc(sizeof(Node));
     tmp->instance.val = -1;
 
-    /*
-
-
-
-     -    -    -    -    -
-    0 1  2 3  4 5  6 7  8 9
-    */
     if (N == 0)
     {
         tmp->right = NULL;
@@ -52,9 +45,11 @@ void inorder(Node *root, execute_fn execute)
 {
     if (root != NULL)
     {
-        inorder(root->left, execute);
+        if (root->left)
+            inorder(root->left, execute);
         execute(root);
-        inorder(root->right, execute);
+        if (root->right)
+            inorder(root->right, execute);
     }
 }
 
@@ -62,8 +57,10 @@ void postorder(Node *root, execute_fn execute)
 {
     if (root != NULL)
     {
-        postorder(root->left, execute);
-        postorder(root->right, execute);
+        if (root->left)
+            postorder(root->left, execute);
+        if (root->right)
+            postorder(root->right, execute);
         execute(root);
     }
 }

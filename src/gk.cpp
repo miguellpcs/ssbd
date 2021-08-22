@@ -9,6 +9,8 @@
 #include "../lib/opt.h"
 #include "../lib/timer.hpp"
 
+uint64_t compress_count;
+uint64_t mem_saved;
 struct GKNode
 {
     int64_t x;
@@ -18,13 +20,20 @@ struct GKNode
     GKNode(int64_t x, uint64_t g, int64_t delta) : x(x), g(g), delta(delta) {}
 };
 
+enum Strategy
+{
+    ONCE,
+    EXHAUSTIVE
+};
+
 struct GK
 {
     std::vector<GKNode> values;
     uint64_t N;
     double eps;
+    Strategy strategy;
 
-    GK(double eps) : eps(eps)
+    GK(double eps, Strategy str) : eps(eps), strategy(str)
     {
         N = 0;
         values.emplace_back(GKNode{INT64_MAX, 1, 0});
@@ -104,18 +113,23 @@ struct GK
 private:
     void compress()
     {
+        compress_count++;
+        auto mem_before = sizeof(this) + (sizeof(GKNode) * this->values.size());
         size_t j = 0;
-        while (j < this->values.size() - 2) // Ignore last element
+        while (j < this->values.size() - 2) // Ignore last element and inf
         {
             uint64_t two_eps_n = (int)ceil(2.0 * this->eps * this->N);
             if (this->values[j].g + this->values[j + 1].g + this->values[j + 1].delta < two_eps_n)
             {
                 this->values[j + 1].g += this->values[j].g;
                 this->values.erase(this->values.begin() + j);
-                return;
+                j--;
             }
             j++;
         }
+
+        auto mem_after = sizeof(this) + (sizeof(GKNode) * this->values.size());
+        mem_saved += (mem_before - mem_after);
     }
 
     std::vector<GKNode>::iterator binary_search(const int64_t x)
@@ -177,7 +191,7 @@ int main(int argc, const char *argv[])
     const char *opt_key = NULL;
     char **opt_args = NULL;
 
-    int status = opt_init(&opt, "val:eps:univ:help:rank:quant:in:verbose:", argc, argv);
+    int status = opt_init(&opt, "val:eps:univ:help:rank:quant:in:verbose:strategy:", argc, argv);
     if (status != OPT_SUCCESS)
     {
         print_error_help();
@@ -188,6 +202,7 @@ int main(int argc, const char *argv[])
     double error_bound = 0.0f;
     uint32_t universe_size = 0;
     operation_e operation = RANK;
+    Strategy strategy = EXHAUSTIVE;
     FILE *in = NULL;
     uint64_t *fields;
     double *fields_double;
@@ -240,6 +255,13 @@ int main(int argc, const char *argv[])
         {
             verbose = true;
         }
+        else if (strcmp(opt_key, "strategy") == 0)
+        {
+            if (strcmp(opt_args[0], "once"))
+            {
+                strategy = ONCE;
+            }
+        }
     }
     opt_free(&opt);
 
@@ -280,9 +302,9 @@ int main(int argc, const char *argv[])
     // Read keys from csv
     read_from_line(parser, buffer);
 
-    GK sketch{error_bound};
+    GK sketch{error_bound, strategy};
     {
-        Timer timer{"Input + Updates"};
+        Timer timer{"Input + Updates", verbose};
         while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
         {
             // skip blank lines
@@ -296,30 +318,50 @@ int main(int argc, const char *argv[])
                 continue;
 
             sketch.update(value);
-
-            if (verbose)
-                sketch.print();
         }
     }
 
     if (in)
         read_query_args_from_file(in, operation, &fields, &fields_double, &fields_count);
 
+    std::vector<int64_t> results;
+    results.reserve(fields_count);
     {
-        Timer timer{"Query Operations"};
+        Timer timer{"Query Operations", verbose};
         for (int i = 0; i < fields_count; i++)
         {
             if (operation == RANK)
             {
-                printf("rank(%lu) = %.2lf\n", fields[i], sketch.rank(fields[i]));
+                auto res = sketch.rank(fields[i]);
+                if (!verbose)
+                    printf("rank(%lu) = %.2lf\n", fields[i], res);
+                else
+                    results.push_back(res);
             }
             else
             {
                 auto x = sketch.query(fields_double[i]).x;
-                printf("rank(%lu) = %.2lf\n", x, sketch.rank(x));
-                printf("quantile(%.2lf) = %lu\n", fields_double[i], x);
+                if (!verbose)
+                    printf("quantile(%.2lf) = %lu\n", fields_double[i], x);
+                else
+                {
+                    results.push_back(x);
+                    results.push_back(sketch.rank(x));
+                }
             }
         }
+    }
+
+    if (verbose)
+    {
+        auto mem_usage = sizeof(sketch) + (sizeof(GKNode) * sketch.values.size());
+        auto cmp_avg = mem_saved / compress_count;
+        printf("%lu,%ld,%ld", mem_usage, compress_count, cmp_avg);
+        for (auto res : results)
+        {
+            printf(",%ld", res);
+        }
+        printf("\n");
     }
 
     return 0;

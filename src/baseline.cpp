@@ -131,7 +131,7 @@ int main(int argc, const char *argv[])
 
     std::vector<int64_t> true_values;
     {
-        Timer timer{"Input + Updates"};
+        Timer timer{"Input + Updates", verbose};
         while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
         {
             // skip blank lines
@@ -151,22 +151,45 @@ int main(int argc, const char *argv[])
     if (in)
         read_query_args_from_file(in, operation, &fields, &fields_double, &fields_count);
 
-    std::sort(true_values.begin(), true_values.end());
+    std::vector<int64_t> results;
+    results.reserve(fields_count);
     {
-        Timer timer{"Query Operations"};
+        Timer timer{"Query Operations", verbose};
+        std::sort(true_values.begin(), true_values.end());
         for (int i = 0; i < fields_count; i++)
         {
             if (operation == RANK)
             {
                 auto x = static_cast<int64_t>(fields[i]);
-                printf("rank(%lu) = %ld\n", fields[i], rank(true_values, x));
+                auto res = rank(true_values, x);
+                if (!verbose)
+                    printf("rank(%ld) = %ld", x, res);
+                else
+                    results.push_back(res);
             }
             else
             {
                 size_t idx = ceil(fields_double[i] * (true_values.size() - 1));
-                printf("query(%lf) = %lu\n", fields_double[i], true_values[idx]);
+                auto res = true_values[idx];
+                if (!verbose)
+                    printf("quantile(%f) = %ld\n", fields_double[i], res);
+                else
+                    results.push_back(res);
             }
         }
+    }
+
+    if (verbose)
+    {
+        auto mem_usage = sizeof(true_values) + (sizeof(int64_t) * true_values.size());
+        auto cmp_count = 0;
+        auto cmp_avg = 0;
+        printf("%lu,%d,%d", mem_usage, cmp_count, cmp_avg);
+        for (auto res : results)
+        {
+            printf(",%ld", res);
+        }
+        printf("\n");
     }
 
     return 0;

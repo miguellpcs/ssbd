@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <vector>
 
 #include "../lib/csv_parser.h"
 #include "../lib/memory.h"
@@ -74,6 +75,7 @@ int min(int x, int y)
 
 uint64_t sum = 0;
 uint64_t mem_usage = 0;
+uint64_t mem_saved = 0;
 uint64_t compress_count = 0;
 int main(int argc, const char *argv[])
 {
@@ -81,7 +83,7 @@ int main(int argc, const char *argv[])
     const char *opt_key = NULL;
     char **opt_args = NULL;
 
-    int status = opt_init(&opt, "val:eps:univ:help:rank:quant:in:compress", argc, argv);
+    int status = opt_init(&opt, "val:eps:univ:help:rank:quant:in:compress:verbose:strategy:", argc, argv);
     if (status != OPT_SUCCESS)
     {
         print_error_help();
@@ -97,6 +99,7 @@ int main(int argc, const char *argv[])
     uint64_t *fields;
     double *fields_double;
     size_t fields_count = 0;
+    bool verbose = false;
     while (get_opt(opt, &opt_key, &opt_args) == OPT_SUCCESS)
     {
         if (strcmp(opt_key, "val") == 0)
@@ -155,6 +158,10 @@ int main(int argc, const char *argv[])
                 strategy = AFTER_CAPACITY_INCREASES;
             }
         }
+        else if (strcmp(opt_key, "verbose") == 0)
+        {
+            verbose = true;
+        }
     }
 
     opt_free(&opt);
@@ -198,41 +205,66 @@ int main(int argc, const char *argv[])
 
     QDigest *sketch = init(universe_size, error_bound, strategy);
 
-    while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
     {
-        // skip blank lines
-        if (lines_read == 1)
-            continue;
+        Timer timer{"Update", verbose};
+        while ((lines_read = getline(&buffer, &buffer_size, file)) != -1)
+        {
+            // skip blank lines
+            if (lines_read == 1)
+                continue;
 
-        read_from_line(parser, buffer);
+            read_from_line(parser, buffer);
 
-        int32_t val = atoi(parser->line[id_field_no]);
+            int32_t val = atoi(parser->line[id_field_no]);
 
-        if (val < 0 || val >= universe_size)
-            continue;
+            if (val < 0 || val >= universe_size)
+                continue;
 
-        Instance instance = {.val = val, .weight = 1};
-        update(sketch, instance);
+            Instance instance = {.val = val, .weight = 1};
+            update(sketch, instance);
+        }
     }
 
     if (in)
         read_query_args_from_file(in, operation, &fields, &fields_double, &fields_count);
 
+    std::vector<int64_t> results;
+    results.reserve(fields_count);
     {
-        Timer timer{"Query Operations"};
+        Timer timer{"Query Operations", verbose};
         for (int i = 0; i < fields_count; i++)
         {
             if (operation == RANK)
             {
-                printf("rank(%lu) = %u\n", fields[i], rank(sketch, fields[i]));
+                auto x = rank(sketch, fields[i]);
+                if (!verbose)
+                    printf("rank(%lu) = %u\n", fields[i], x);
+                else
+                    results.push_back(x);
             }
             else
             {
                 auto x = quantile(sketch, fields_double[i]);
-                printf("rank(%d) = %u\n", x, rank(sketch, x));
-                printf("quantile(%.2lf) = %u\n", fields_double[i], x);
+                if (!verbose)
+                    printf("quantile(%.2lf) = %lu\n", fields_double[i], x);
+                else
+                    results.push_back(x);
             }
         }
+    }
+
+    if (verbose)
+    {
+        auto cmp_avg = 0;
+        if (compress_count != 0)
+            auto cmp_avg = mem_saved / compress_count;
+        memory(sketch);
+        printf("%lu,%ld,%ld", mem_usage, compress_count, cmp_avg);
+        for (auto res : results)
+        {
+            printf(",%ld", res);
+        }
+        printf("\n");
     }
 
     return 0;
@@ -310,39 +342,21 @@ void update(QDigest *sketch, Instance value)
     // Check compress strategy
     if (previous_capacity < capacity(sketch) && sketch->compress_strategy == AFTER_CAPACITY_INCREASES)
     {
-        printf("Memory before compress: ");
-        memory(sketch);
         compress(sketch);
-        compress_count++;
-        printf("Memory after compress: ");
-        memory(sketch);
-        printf("\n");
     }
 
     if (previous_weight > weight(sketch->root) / 2.0)
     {
         if (sketch->compress_strategy == WHEN_WEIGHT_DOUBLES)
         {
-            printf("Memory before compress: ");
-            memory(sketch);
             compress(sketch);
-            compress_count++;
-            printf("Memory after compress: ");
-            memory(sketch);
-            printf("\n");
         }
         sketch->saved_weight = previous_weight;
     }
 
     if (sketch->compress_strategy == AFTER_EVERY_UPDATE)
     {
-        printf("Memory before compress: ");
-        memory(sketch);
         compress(sketch);
-        compress_count++;
-        printf("Memory after compress: ");
-        memory(sketch);
-        printf("\n");
     }
 }
 
@@ -409,7 +423,7 @@ uint64_t weight(Node *root)
 
 uint64_t capacity(QDigest *sketch)
 {
-    return sketch->error_bound * sketch->saved_weight / sketch->log_univ;
+    return ceil(sketch->error_bound * sketch->saved_weight / sketch->log_univ);
 }
 
 void execute_zero_weight(Node *root)
@@ -427,34 +441,44 @@ void memory(QDigest *sketch)
     mem_usage = 0;
     inorder(sketch->root, check_memory);
     mem_usage += sizeof(sketch);
-    printf("QDigest mem usage = %lubytes (%lfMB)\n", mem_usage, mem_usage / 1024.0);
 }
 
 void compress(QDigest *sketch)
 {
     int _x;
+    compress_count++;
+    memory(sketch);
+    auto mem_before = mem_usage;
     compress_helper(sketch, sketch->root, capacity(sketch), 0, &_x);
+    memory(sketch);
+    auto mem_after = mem_usage;
+    mem_saved += (mem_before - mem_after);
 }
 
 Node *compress_helper(QDigest *sketch, Node *root, int cap, int avail_up, int *move_up)
 {
     auto x = 0;
-    auto avail_here = cap - root->instance.weight;
-    auto move_up_from_chd = 0;
-    Node *u = compress_helper(sketch, root->left, cap, avail_up - avail_here, &move_up_from_chd);
-    check_free(root->left);
-    root->left = u;
-    auto put_here = min(avail_here, move_up_from_chd);
-    root->instance.weight += put_here;
-    x += (move_up_from_chd - put_here);
+    if (root->left != NULL)
+    {
+        auto avail_here = cap - root->instance.weight;
+        auto move_up_from_chd = 0;
+        Node *u = compress_helper(sketch, root->left, cap, avail_up - avail_here, &move_up_from_chd);
+        root->left = u;
+        auto put_here = min(avail_here, move_up_from_chd);
+        root->instance.weight += put_here;
+        x += (move_up_from_chd - put_here);
+    }
 
-    avail_here = cap - root->instance.weight;
-    u = compress_helper(sketch, root->right, cap, avail_up - avail_here, &move_up_from_chd);
-    check_free(root->right);
-    root->right = u;
-    put_here = min(avail_here, move_up_from_chd);
-    root->instance.weight += put_here;
-    x += (move_up_from_chd - put_here);
+    if (root->right != NULL)
+    {
+        auto avail_here = cap - root->instance.weight;
+        auto move_up_from_chd = 0;
+        Node *u = compress_helper(sketch, root->right, cap, avail_up - avail_here, &move_up_from_chd);
+        root->right = u;
+        auto put_here = min(avail_here, move_up_from_chd);
+        root->instance.weight += put_here;
+        x += (move_up_from_chd - put_here);
+    }
 
     auto move_up_from_here = min(avail_up, root->instance.weight);
     x += move_up_from_here;

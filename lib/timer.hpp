@@ -7,7 +7,7 @@
 class Timer
 {
 public:
-    Timer(std::string name) : m_Name(name)
+    Timer(std::string name, bool verbose) : m_Name(name), m_Verbose(verbose)
     {
         m_StartTimepoint = std::chrono::high_resolution_clock::now();
     }
@@ -25,14 +25,15 @@ public:
         auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
 
         auto duration = end - start;
-        double ms = duration * 0.001;
 
-        printf("Timer %s => %ldus (%lfms)\n", m_Name.c_str(), duration, ms);
+        if (m_Verbose)
+            printf("%ld,", duration);
     }
 
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTimepoint;
     std::string m_Name;
+    bool m_Verbose;
 };
 
 #endif // timer_h
