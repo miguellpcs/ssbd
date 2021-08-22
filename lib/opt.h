@@ -62,8 +62,6 @@ int opt_init(opt_t **opt, char *pattern, const int argc, const char *const *argv
 
 void opt_free(opt_t **opt)
 {
-    for (int i = 0; i < (*opt)->patterns_count; i++)
-        check_free((*opt)->patterns[i]);
     check_free((*opt)->patterns);
     check_free(*opt);
 }

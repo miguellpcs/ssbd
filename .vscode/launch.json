@@ -48,18 +48,23 @@
             ]
         },
         {
-            "name": "(gdb) Launch KMV",
+            "name": "(gdb) Launch QDigest",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/kmv",
+            "program": "${workspaceFolder}/bin/qdig",
             "args": [
-                "--target",
-                "7",
+                "--val",
+                "0",
                 "--eps",
-                "0.05",
-                "--delta",
-                "0.01",
-                "../network_flows.csv"
+                "0.1",
+                "--univ",
+                "10",
+                "../data/gk_test.csv",
+                "--quant",
+                "--in",
+                "../data/gk_test.in",
+                "--strategy",
+                "update"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

@@ -1,6 +1,6 @@
 CC=gcc
 CPP=g++
-CFLAGS=-O3
+CFLAGS=-g
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
 
@@ -10,7 +10,7 @@ build:
 all: clean build qdig gk 
 
 qdig: 
-	-$(CC) $(CFLAGS) src/qdig.c -lm -o bin/qdig
+	-$(CPP) $(CFLAGS) src/qdig.cpp -lm -o bin/qdig
 gk: 
 	-$(CPP) $(CFLAGS) src/gk.cpp -o bin/gk
 
