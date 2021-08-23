@@ -165,7 +165,10 @@ int main(int argc, const char *argv[])
                 if (!verbose)
                     printf("rank(%ld) = %ld", x, res);
                 else
+                {
                     results.push_back(res);
+                    results.push_back(true_values.size());
+                }
             }
             else
             {
@@ -174,7 +177,10 @@ int main(int argc, const char *argv[])
                 if (!verbose)
                     printf("quantile(%f) = %ld\n", fields_double[i], res);
                 else
+                {
                     results.push_back(res);
+                    results.push_back(true_values.size());
+                }
             }
         }
     }
