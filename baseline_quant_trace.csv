@@ -1,4 +1,4 @@
-id,val,epsilon,univ,query,time_update,time_query,mem_usage,comp_count,comp_mem_avg,value
+id,val,epsilon,univ,query,time_update,time_query,mem_usage,comp_count,comp_mem_avg,value,total_weight
 7,5,0.1,10000,3575411,1050758,263718,28603320,0,0,3575412,3575412
 3,4,0.1,1000000,1918598,1107527,312081,28618392,0,0,3577296,3577296
 8,5,0.05,1000000,941345,1626944,576371,28618392,0,0,3577296,3577296
