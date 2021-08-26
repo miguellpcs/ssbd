@@ -37,6 +37,7 @@ typedef struct
 QDigest *init(size_t, double, compress_strategy_e);
 void free_sketch(QDigest *);
 
+void print2D(Node *);
 void update(QDigest *, Instance);
 uint32_t rank(QDigest *, int);
 size_t quantile(QDigest *, double);
@@ -311,6 +312,7 @@ void update(QDigest *sketch, Instance value)
     while (value.weight != 0 && (right - left) > 1)
     {
         auto avail = cap - v->instance.weight;
+        assert(avail >= 0);
         auto added = min(value.weight, avail);
         v->instance.weight += added;
         value.weight -= added;
@@ -383,6 +385,36 @@ uint32_t rank(QDigest *sketch, int x)
     return r;
 }
 
+void print2DUtil(Node *root, int space)
+{
+    // Base case
+    if (root == NULL)
+        return;
+
+    // Increase distance between levels
+    space += 5;
+
+    // Process right child first
+    print2DUtil(root->right, space);
+
+    // Print current node after space
+    // count
+    printf("\n");
+    for (int i = 5; i < space; i++)
+        printf(" ");
+    printf("%d", root->instance.weight);
+
+    // Process left child
+    print2DUtil(root->left, space);
+}
+
+// Wrapper over print2DUtil()
+void print2D(Node *root)
+{
+    // Pass initial space count as 0
+    print2DUtil(root, 0);
+}
+
 Node *qNode;
 size_t cur_rank;
 size_t request_rank;
@@ -444,24 +476,26 @@ void memory(QDigest *sketch)
 
 void compress(QDigest *sketch)
 {
+    //print2D(sketch->root);
     int _x = 0;
     compress_count++;
     memory(sketch);
     auto mem_before = mem_usage;
-    compress_helper(sketch, sketch->root, capacity(sketch), 0, &_x);
+    //compress_helper(sketch, sketch->root, capacity(sketch), 0, &_x);
     memory(sketch);
     auto mem_after = mem_usage;
     mem_saved += (mem_before - mem_after);
+    //print2D(sketch->root);
 }
 
 Node *compress_helper(QDigest *sketch, Node *root, int cap, int avail_up, int *move_up)
 {
     auto x = 0;
 
-    auto avail_here = cap - root->instance.weight;
-    auto move_up_from_chd = 0;
     if (root->left != NULL)
     {
+        auto avail_here = cap - root->instance.weight;
+        auto move_up_from_chd = 0;
         Node *u = compress_helper(sketch, root->left, cap, avail_up + avail_here, &move_up_from_chd);
         if (!u)
             check_free(root->left);
@@ -473,7 +507,8 @@ Node *compress_helper(QDigest *sketch, Node *root, int cap, int avail_up, int *m
 
     if (root->right != NULL)
     {
-        avail_here = cap - root->instance.weight;
+        auto avail_here = cap - root->instance.weight;
+        auto move_up_from_chd = 0;
         Node *u = compress_helper(sketch, root->right, cap, avail_up + avail_here, &move_up_from_chd);
         if (!u)
             check_free(root->right);

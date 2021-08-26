@@ -1,6 +1,6 @@
 CC=gcc
 CPP=g++
-CFLAGS=-g
+CFLAGS=-O3
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
 
