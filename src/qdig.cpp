@@ -351,7 +351,6 @@ void update(QDigest *sketch, Instance value)
         {
             compress(sketch);
         }
-        sketch->saved_weight = previous_weight;
     }
 
     if (sketch->compress_strategy == AFTER_EVERY_UPDATE)
@@ -445,7 +444,7 @@ void memory(QDigest *sketch)
 
 void compress(QDigest *sketch)
 {
-    int _x;
+    int _x = 0;
     compress_count++;
     memory(sketch);
     auto mem_before = mem_usage;
@@ -458,11 +457,14 @@ void compress(QDigest *sketch)
 Node *compress_helper(QDigest *sketch, Node *root, int cap, int avail_up, int *move_up)
 {
     auto x = 0;
+
+    auto avail_here = cap - root->instance.weight;
+    auto move_up_from_chd = 0;
     if (root->left != NULL)
     {
-        auto avail_here = cap - root->instance.weight;
-        auto move_up_from_chd = 0;
-        Node *u = compress_helper(sketch, root->left, cap, avail_up - avail_here, &move_up_from_chd);
+        Node *u = compress_helper(sketch, root->left, cap, avail_up + avail_here, &move_up_from_chd);
+        if (!u)
+            check_free(root->left);
         root->left = u;
         auto put_here = min(avail_here, move_up_from_chd);
         root->instance.weight += put_here;
@@ -471,18 +473,19 @@ Node *compress_helper(QDigest *sketch, Node *root, int cap, int avail_up, int *m
 
     if (root->right != NULL)
     {
-        auto avail_here = cap - root->instance.weight;
-        auto move_up_from_chd = 0;
-        Node *u = compress_helper(sketch, root->right, cap, avail_up - avail_here, &move_up_from_chd);
+        avail_here = cap - root->instance.weight;
+        Node *u = compress_helper(sketch, root->right, cap, avail_up + avail_here, &move_up_from_chd);
+        if (!u)
+            check_free(root->right);
         root->right = u;
         auto put_here = min(avail_here, move_up_from_chd);
         root->instance.weight += put_here;
         x += (move_up_from_chd - put_here);
     }
 
-    auto move_up_from_here = min(avail_up, root->instance.weight);
+    auto move_up_from_here = std::min(avail_up, root->instance.weight);
     x += move_up_from_here;
-    root->instance.weight += move_up_from_here;
+    root->instance.weight -= move_up_from_here;
 
     *move_up = x;
     if (root->instance.weight == 0 && root->left == NULL && root->right == NULL)
